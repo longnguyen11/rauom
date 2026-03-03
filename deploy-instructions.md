@@ -2,6 +2,17 @@
 
 This guide is written for this repository in `c:\Users\caych\workspace\rauom` and assumes production deploy target is **Cloudflare Workers + D1**.
 
+## Quick deploy commands
+
+Once setup is complete, the two main production commands are:
+
+```powershell
+npm run db:migrate:remote
+npm run deploy
+```
+
+If native Windows deploy fails, use WSL or GitHub Actions (section 8).
+
 ## 0) What you are deploying
 
 - App runtime: Next.js via OpenNext on Cloudflare Workers
@@ -72,7 +83,7 @@ npm run cf-typegen
 This repo is currently configured with:
 
 - DB name: `rauom-db`
-- DB id in `wrangler.jsonc`: `2e9065bd-93fa-4c01-8a54-424562d69496`
+- DB id in `wrangler.jsonc`: `821b444b-034f-40fa-a538-9b3f8da0903f`
 
 If you want a fresh DB:
 
@@ -94,6 +105,13 @@ This applies:
 
 - `migrations/0001_init.sql`
 - `migrations/0002_seed.sql`
+- `migrations/0003_required_dishes.sql`
+
+Immediately after migrations, deploy the app:
+
+```powershell
+npm run deploy
+```
 
 ### 3.3 Verify D1 data
 
@@ -101,7 +119,7 @@ This applies:
 npx wrangler d1 execute rauom-db --remote --command "SELECT slug, status FROM dishes LIMIT 10;"
 ```
 
-You should see seeded dishes (like `vegan-pho-chay`, `bo-kho`).
+You should see seeded dishes (like `pho`, `pho-chay`, `goi-cuon`, `bo-kho`, `banh-xeo`).
 
 ## 4) Configure required keys/services
 
@@ -265,7 +283,48 @@ npm run deploy
 
 If WSL is not available, use Linux/macOS CI runner for deploy.
 
-## 8) Deploy to production
+## 8) Deploy with GitHub Actions (recommended for Windows users)
+
+This repo includes a workflow at:
+
+- `.github/workflows/deploy.yml`
+
+### 8.1 Add required GitHub repository secrets
+
+In GitHub: **Repo Settings > Secrets and variables > Actions > New repository secret**.
+
+Create:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+`CLOUDFLARE_ACCOUNT_ID` for this setup: `206bcb4ae42b51fb1b298c1a5ac283b6`.
+
+### 8.2 Create Cloudflare API token for GitHub
+
+1. Go to `https://dash.cloudflare.com/profile/api-tokens`.
+2. Click **Create Token**.
+3. Start from **Edit Cloudflare Workers** template, then include D1 access.
+4. Ensure permissions include:
+   - `Account - Workers Scripts:Edit`
+   - `Account - D1:Edit`
+5. Scope the token to your account.
+6. Copy token and save it as `CLOUDFLARE_API_TOKEN` in GitHub secrets.
+
+### 8.3 Run deploy workflow
+
+1. Push to `main`, or
+2. In GitHub, open **Actions > Deploy to Cloudflare > Run workflow**.
+
+Workflow steps:
+
+1. `npm ci`
+2. `npm run lint`
+3. `npm run typecheck`
+4. `npm run db:migrate:remote`
+5. `npm run deploy`
+
+## 9) Deploy to production manually
 
 After keys, vars, and migrations are ready:
 
@@ -281,14 +340,14 @@ This runs:
 
 After success, Wrangler outputs worker URL (for example `https://rau-om.<subdomain>.workers.dev`).
 
-## 9) Attach custom domain (recommended)
+## 10) Attach custom domain (recommended)
 
 1. In Cloudflare dashboard, open **Workers & Pages > rau-om > Settings > Domains & Routes**.
 2. Add custom domain (example `rauom.com` or `www.rauom.com`).
 3. If domain is already on Cloudflare, route activation is mostly automatic.
 4. If domain is external, update nameservers at registrar to Cloudflare first.
 
-## 10) Post-deploy smoke test checklist
+## 11) Post-deploy smoke test checklist
 
 Run these checks immediately after deploy:
 
@@ -312,7 +371,7 @@ Useful query:
 npx wrangler d1 execute rauom-db --remote --command "SELECT order_number,status,total_after_tax_cents,created_at_utc FROM orders ORDER BY created_at_utc DESC LIMIT 10;"
 ```
 
-## 11) Ongoing deploy workflow (every update)
+## 12) Ongoing deploy workflow (every update)
 
 For each new release:
 
@@ -338,7 +397,7 @@ npm run db:migrate:remote
 npm run deploy
 ```
 
-## 12) Backup and recovery basics
+## 13) Backup and recovery basics
 
 ### D1 backup export
 
@@ -353,7 +412,7 @@ npx wrangler d1 export rauom-db --remote --output rauom-db-backup.sql
 - Update `database_id` in `wrangler.jsonc`
 - Redeploy
 
-## 13) Troubleshooting
+## 14) Troubleshooting
 
 ### `code: 10042` on R2 bucket creation
 
@@ -385,7 +444,7 @@ Check:
 - If Access enabled, verify your identity policy allows your user.
 - If token fallback used, set `ADMIN_ACCESS_TOKEN` and login at `/admin/login`.
 
-## 14) Exact files involved in deploy
+## 15) Exact files involved in deploy
 
 - [wrangler.jsonc](./wrangler.jsonc)
 - [package.json](./package.json)
@@ -394,7 +453,7 @@ Check:
 - [open-next.config.ts](./open-next.config.ts)
 - [deploy-instructions.md](./deploy-instructions.md)
 
-## 15) Recommended next hardening tasks
+## 16) Recommended next hardening tasks
 
 1. Add real Turnstile widget to checkout UI and pass token automatically.
 2. Put `/admin*` behind Cloudflare Access only, disable token fallback.
