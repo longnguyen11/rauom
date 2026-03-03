@@ -229,6 +229,10 @@ interface UpsertDishInput {
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
+  ingredients?: Array<{
+    name: string;
+    isAllergen: boolean;
+  }>;
 }
 
 export async function upsertDish(input: UpsertDishInput): Promise<void> {
@@ -269,6 +273,23 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
       input.leadTimeDays,
     ],
   );
+
+  if (input.ingredients) {
+    await dbRun(`DELETE FROM ingredients WHERE dish_id = ?`, [id]);
+
+    for (const ingredient of input.ingredients) {
+      await dbRun(
+        `INSERT INTO ingredients (id, dish_id, name, is_allergen)
+         VALUES (?, ?, ?, ?)`,
+        [
+          `ing_${crypto.randomUUID()}`,
+          id,
+          ingredient.name,
+          ingredient.isAllergen ? 1 : 0,
+        ],
+      );
+    }
+  }
 }
 
 export async function updateDishStatus(

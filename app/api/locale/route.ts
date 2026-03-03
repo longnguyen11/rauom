@@ -15,6 +15,7 @@ export async function POST(request: Request) {
   try {
     const payload = schema.parse(await request.json());
     const locale = normalizeLocale(payload.locale) as Locale;
+    const isSecure = new URL(request.url).protocol === "https:";
 
     const response = NextResponse.json({ ok: true, locale });
     response.cookies.set({
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       path: "/",
       httpOnly: false,
       sameSite: "lax",
-      secure: true,
+      secure: isSecure,
       maxAge: 60 * 60 * 24 * 365,
     });
 

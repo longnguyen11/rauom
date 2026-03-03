@@ -13,6 +13,14 @@ const createSchema = z.object({
   priceCents: z.number().int().min(100).max(50000),
   leadTimeDays: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   status: z.enum(["draft", "scheduled", "live", "archived", "sold_out"]),
+  ingredients: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(120),
+        isAllergen: z.boolean(),
+      }),
+    )
+    .default([]),
 });
 
 export async function GET(request: NextRequest) {
