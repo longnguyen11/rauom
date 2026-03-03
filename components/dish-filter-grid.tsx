@@ -6,15 +6,18 @@ import { useMemo, useState } from "react";
 
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { formatCurrency } from "@/lib/format";
+import { getMessages, type Locale } from "@/lib/i18n-dictionary";
 import type { Dish } from "@/lib/types";
 
 interface DishFilterGridProps {
   dishes: Dish[];
   tagOptions: { code: string; label: string }[];
+  locale: Locale;
 }
 
-export function DishFilterGrid({ dishes, tagOptions }: DishFilterGridProps) {
+export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridProps) {
   const [activeTag, setActiveTag] = useState<string>("all");
+  const t = getMessages(locale);
 
   const filtered = useMemo(() => {
     if (activeTag === "all") {
@@ -29,11 +32,11 @@ export function DishFilterGrid({ dishes, tagOptions }: DishFilterGridProps) {
   return (
     <section className="dish-grid-section" aria-labelledby="dish-grid-heading">
       <div className="section-header">
-        <h2 id="dish-grid-heading">Browse Dishes</h2>
-        <p>Fresh-cook model: kitchen starts after order confirmation.</p>
+        <h2 id="dish-grid-heading">{t.dishGrid.title}</h2>
+        <p>{t.dishGrid.subtitle}</p>
       </div>
 
-      <div className="chip-row" role="tablist" aria-label="Filter dishes by dietary tags">
+      <div className="chip-row" role="tablist" aria-label={t.dishGrid.filterAria}>
         <button
           type="button"
           role="tab"
@@ -41,7 +44,7 @@ export function DishFilterGrid({ dishes, tagOptions }: DishFilterGridProps) {
           className={activeTag === "all" ? "chip active" : "chip"}
           onClick={() => setActiveTag("all")}
         >
-          All
+          {t.dishGrid.all}
         </button>
 
         {tagOptions.map((tag) => (
@@ -84,7 +87,9 @@ export function DishFilterGrid({ dishes, tagOptions }: DishFilterGridProps) {
 
                 <p className="dish-description">{dish.shortDescription}</p>
 
-                <p className="lead-time-line">Minimum lead time: {dish.leadTimeDays} day(s)</p>
+                <p className="lead-time-line">
+                  {t.dishGrid.minimumLeadTime}: {dish.leadTimeDays} {t.common.daySuffix}
+                </p>
 
                 <ul className="tag-row" aria-label="Dietary tags">
                   {dish.dietaryTags.map((tag) => (
@@ -96,11 +101,12 @@ export function DishFilterGrid({ dishes, tagOptions }: DishFilterGridProps) {
 
                 <div className="dish-actions">
                   <Link href={`/dishes/${dish.slug}`} className="btn-secondary">
-                    View details
+                    {t.common.viewDetails}
                   </Link>
 
                   <AddToCartButton
                     className="btn-primary"
+                    locale={locale}
                     dish={{
                       id: dish.id,
                       slug: dish.slug,

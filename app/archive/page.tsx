@@ -2,20 +2,21 @@
 import Link from "next/link";
 
 import { listArchivedDishes } from "@/lib/dishes";
+import { getCurrentMessages } from "@/lib/i18n";
 
 export default async function ArchivePage() {
-  const archived = await listArchivedDishes();
+  const [{ messages }, archived] = await Promise.all([
+    getCurrentMessages(),
+    listArchivedDishes(),
+  ]);
 
   return (
     <section className="page-prose">
-      <h1>Archive</h1>
-      <p>
-        Archived dishes stay searchable so returning customers can request repeats in
-        future rotations.
-      </p>
+      <h1>{messages.archive.title}</h1>
+      <p>{messages.archive.subtitle}</p>
 
       {archived.length === 0 ? (
-        <p>No archived dishes yet.</p>
+        <p>{messages.archive.empty}</p>
       ) : (
         <div className="dish-grid">
           {archived.map((dish) => (
@@ -34,7 +35,7 @@ export default async function ArchivePage() {
                 <h2>{dish.name}</h2>
                 <p>{dish.shortDescription}</p>
                 <Link href={`/dishes/${dish.slug}`} className="btn-secondary">
-                  View archived details
+                  {messages.archive.viewArchivedDetails}
                 </Link>
               </div>
             </article>

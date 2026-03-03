@@ -1,15 +1,13 @@
-﻿export default function AllergensPage() {
+﻿import { getCurrentMessages } from "@/lib/i18n";
+
+export default async function AllergensPage() {
+  const { messages } = await getCurrentMessages();
+
   return (
     <article className="page-prose">
-      <h1>Allergens Disclosure</h1>
-      <p>
-        Rau Om dishes may include or be prepared near fish, shellfish, soy, sesame,
-        peanuts, tree nuts, gluten, eggs, and dairy.
-      </p>
-      <p>
-        Ingredient lists are provided per dish, but cross-contact is possible in a
-        home-kitchen workflow. Contact us before ordering if you have severe allergies.
-      </p>
+      <h1>{messages.allergens.title}</h1>
+      <p>{messages.allergens.paragraph1}</p>
+      <p>{messages.allergens.paragraph2}</p>
     </article>
   );
 }

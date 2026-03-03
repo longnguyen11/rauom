@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 
-export function NewsletterForm() {
+import { getMessages, type Locale } from "@/lib/i18n-dictionary";
+
+export function NewsletterForm({ locale }: { locale: Locale }) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const t = getMessages(locale);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,14 +26,14 @@ export function NewsletterForm() {
 
       const data = (await response.json()) as { message?: string; error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Subscription failed.");
+        setError(data.error ?? t.newsletter.defaultError);
         return;
       }
 
-      setMessage(data.message ?? "Check your inbox to confirm subscription.");
+      setMessage(data.message ?? t.newsletter.defaultSuccess);
       setEmail("");
     } catch {
-      setError("Subscription failed.");
+      setError(t.newsletter.defaultError);
     } finally {
       setSubmitting(false);
     }
@@ -38,8 +41,8 @@ export function NewsletterForm() {
 
   return (
     <section className="newsletter-inline" aria-labelledby="newsletter-heading">
-      <h2 id="newsletter-heading">Get weekly featured dishes</h2>
-      <p>Double opt-in enabled. One-click unsubscribe in every email.</p>
+      <h2 id="newsletter-heading">{t.newsletter.title}</h2>
+      <p>{t.newsletter.subtitle}</p>
 
       <form onSubmit={submit}>
         <input
@@ -47,11 +50,11 @@ export function NewsletterForm() {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="you@example.com"
-          aria-label="Email address"
+          placeholder={t.newsletter.inputPlaceholder}
+          aria-label={t.newsletter.inputAria}
         />
         <button type="submit" disabled={submitting}>
-          {submitting ? "Submitting..." : "Join newsletter"}
+          {submitting ? t.newsletter.submitting : t.newsletter.join}
         </button>
       </form>
 

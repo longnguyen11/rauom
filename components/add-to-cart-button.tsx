@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useCart } from "@/components/cart-context";
+import { getMessages, type Locale } from "@/lib/i18n-dictionary";
 
 interface AddToCartButtonProps {
   dish: {
@@ -13,17 +14,22 @@ interface AddToCartButtonProps {
     leadTimeDays: number;
     imageUrl: string;
   };
+  locale: Locale;
   className?: string;
 }
 
-export function AddToCartButton({ dish, className }: AddToCartButtonProps) {
+export function AddToCartButton({ dish, locale, className }: AddToCartButtonProps) {
   const { addItem } = useCart();
   const [justAdded, setJustAdded] = useState(false);
+  const t = getMessages(locale);
+  const resolvedClassName = className
+    ? `${className} add-to-cart-button`
+    : "btn-primary add-to-cart-button";
 
   return (
     <button
       type="button"
-      className={className}
+      className={resolvedClassName}
       onClick={() => {
         addItem(
           {
@@ -41,7 +47,7 @@ export function AddToCartButton({ dish, className }: AddToCartButtonProps) {
         window.setTimeout(() => setJustAdded(false), 1200);
       }}
     >
-      {justAdded ? "Added" : "Add to Cart"}
+      {justAdded ? t.common.added : t.common.addToCart}
     </button>
   );
 }

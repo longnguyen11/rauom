@@ -4,9 +4,11 @@ import { DishFilterGrid } from "@/components/dish-filter-grid";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { getDietaryTagOptions, getFeaturedDishes, listLiveDishes } from "@/lib/dishes";
+import { getCurrentMessages } from "@/lib/i18n";
 
 export default async function HomePage() {
-  const [dishes, featured, tagOptions] = await Promise.all([
+  const [{ locale, messages }, dishes, featured, tagOptions] = await Promise.all([
+    getCurrentMessages(),
     listLiveDishes(),
     getFeaturedDishes(4),
     getDietaryTagOptions(),
@@ -14,29 +16,26 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroCarousel dishes={featured.length > 0 ? featured : dishes.slice(0, 4)} />
+      <HeroCarousel locale={locale} dishes={featured.length > 0 ? featured : dishes.slice(0, 4)} />
 
-      <DishFilterGrid dishes={dishes} tagOptions={tagOptions} />
+      <DishFilterGrid locale={locale} dishes={dishes} tagOptions={tagOptions} />
 
       <section className="page-prose" style={{ marginTop: "1.2rem" }}>
-        <h2>Trust and Freshness</h2>
-        <p>
-          Every order is prepared after confirmation. Rau Om does not batch-cook for
-          instant dispatch, so quality and timing stay consistent.
-        </p>
+        <h2>{messages.home.trustTitle}</h2>
+        <p>{messages.home.trustBody}</p>
         <ul>
-          <li>Lead-time protected scheduling (1-3 days by dish complexity)</li>
-          <li>Delivery range checks with pickup fallback</li>
-          <li>Manual payment support at launch: cash, Zelle, Venmo</li>
+          <li>{messages.home.trustBulletLeadTime}</li>
+          <li>{messages.home.trustBulletDelivery}</li>
+          <li>{messages.home.trustBulletPayment}</li>
         </ul>
         <p>
           <Link href="/how-ordering-works" className="btn-secondary">
-            Read the full ordering flow
+            {messages.home.readFlow}
           </Link>
         </p>
       </section>
 
-      <NewsletterForm />
+      <NewsletterForm locale={locale} />
     </>
   );
 }

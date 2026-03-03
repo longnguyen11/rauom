@@ -1,17 +1,17 @@
 ﻿import { CheckoutForm } from "@/components/checkout-form";
+import { getCurrentMessages } from "@/lib/i18n";
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const { locale, messages } = await getCurrentMessages();
+
   return (
     <section className="checkout-shell">
       <div className="page-prose">
-        <h1>Checkout</h1>
-        <p>
-          Fresh-cook policy applies: all orders are prepared after confirmation. Slot
-          eligibility enforces dish lead-time and payment confirmation buffer.
-        </p>
+        <h1>{messages.checkoutPage.title}</h1>
+        <p>{messages.checkoutPage.intro}</p>
       </div>
 
-      <CheckoutForm />
+      <CheckoutForm locale={locale} />
     </section>
   );
 }

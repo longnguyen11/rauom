@@ -6,20 +6,22 @@ import { useState } from "react";
 
 import { useCart } from "@/components/cart-context";
 import { formatCurrency } from "@/lib/format";
+import { getMessages, type Locale } from "@/lib/i18n-dictionary";
 
-export function CartFab() {
+export function CartFab({ locale }: { locale: Locale }) {
   const [open, setOpen] = useState(false);
   const { items, itemCount, subtotalCents, updateQuantity, removeItem } = useCart();
+  const t = getMessages(locale);
 
   return (
     <>
       <button
         className="cart-fab"
         type="button"
-        aria-label="Open cart"
+        aria-label={t.cart.openAria}
         onClick={() => setOpen(true)}
       >
-        Cart ({itemCount})
+        {t.cart.buttonLabel} ({itemCount})
       </button>
 
       {open && (
@@ -27,17 +29,17 @@ export function CartFab() {
           <aside
             className="cart-drawer"
             onClick={(event) => event.stopPropagation()}
-            aria-label="Shopping cart"
+            aria-label={t.cart.drawerAria}
           >
             <header className="cart-drawer-header">
-              <h2>Your Cart</h2>
+              <h2>{t.cart.title}</h2>
               <button type="button" onClick={() => setOpen(false)}>
-                Close
+                {t.cart.close}
               </button>
             </header>
 
             {items.length === 0 ? (
-              <p className="cart-empty">No dishes selected yet.</p>
+              <p className="cart-empty">{t.cart.empty}</p>
             ) : (
               <ul className="cart-list">
                 {items.map((item) => (
@@ -52,13 +54,15 @@ export function CartFab() {
                     <div className="cart-item-content">
                       <div>
                         <h3>{item.name}</h3>
-                        <p>{formatCurrency(item.priceCents)} each</p>
+                        <p>
+                          {formatCurrency(item.priceCents)} {t.common.each}
+                        </p>
                       </div>
                       <div className="cart-item-controls">
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.dishId, item.quantity - 1)}
-                          aria-label={`Decrease quantity for ${item.name}`}
+                          aria-label={`${t.cart.decreaseQtyPrefix} ${item.name}`}
                         >
                           -
                         </button>
@@ -66,12 +70,12 @@ export function CartFab() {
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.dishId, item.quantity + 1)}
-                          aria-label={`Increase quantity for ${item.name}`}
+                          aria-label={`${t.cart.increaseQtyPrefix} ${item.name}`}
                         >
                           +
                         </button>
                         <button type="button" onClick={() => removeItem(item.dishId)}>
-                          Remove
+                          {t.cart.remove}
                         </button>
                       </div>
                     </div>
@@ -82,11 +86,11 @@ export function CartFab() {
 
             <footer className="cart-footer">
               <div>
-                <p>Subtotal</p>
+                <p>{t.cart.subtotal}</p>
                 <strong>{formatCurrency(subtotalCents)}</strong>
               </div>
               <Link href="/checkout" className="btn-primary" onClick={() => setOpen(false)}>
-                Checkout
+                {t.cart.checkout}
               </Link>
             </footer>
           </aside>

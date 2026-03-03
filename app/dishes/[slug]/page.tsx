@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { getDishBySlug, mapDishesBySlug } from "@/lib/dishes";
 import { formatCurrency } from "@/lib/format";
+import { getCurrentMessages } from "@/lib/i18n";
 
 interface DishPageProps {
   params: Promise<{ slug: string }>;
@@ -40,7 +41,10 @@ export async function generateStaticParams() {
 
 export default async function DishPage({ params }: DishPageProps) {
   const { slug } = await params;
-  const dish = await getDishBySlug(slug);
+  const [dish, { locale, messages }] = await Promise.all([
+    getDishBySlug(slug),
+    getCurrentMessages(),
+  ]);
 
   if (!dish) {
     notFound();
@@ -75,7 +79,7 @@ export default async function DishPage({ params }: DishPageProps) {
       />
 
       <p>
-        <Link href="/">Back to dishes</Link>
+        <Link href="/">{messages.dishPage.backToDishes}</Link>
       </p>
 
       <h1>{dish.name}</h1>
@@ -97,11 +101,11 @@ export default async function DishPage({ params }: DishPageProps) {
           </p>
           <p>{dish.longDescription}</p>
           <p>
-            <strong>Lead time:</strong> {dish.leadTimeDays} day(s)
+            <strong>{messages.dishPage.leadTime}:</strong> {dish.leadTimeDays} {messages.common.daySuffix}
           </p>
 
           <div>
-            <h2>Dietary tags</h2>
+            <h2>{messages.dishPage.dietaryTags}</h2>
             <ul className="tag-row" style={{ marginTop: "0.4rem" }}>
               {dish.dietaryTags.map((tag) => (
                 <li key={tag.code} className="tag-pill">
@@ -113,6 +117,7 @@ export default async function DishPage({ params }: DishPageProps) {
 
           <AddToCartButton
             className="btn-primary"
+            locale={locale}
             dish={{
               id: dish.id,
               slug: dish.slug,
@@ -126,12 +131,12 @@ export default async function DishPage({ params }: DishPageProps) {
       </div>
 
       <section>
-        <h2>Ingredients</h2>
+        <h2>{messages.dishPage.ingredients}</h2>
         <ul>
           {dish.ingredients.map((ingredient) => (
             <li key={ingredient.name}>
               {ingredient.name}
-              {ingredient.isAllergen ? " (allergen)" : ""}
+              {ingredient.isAllergen ? ` ${messages.dishPage.allergenSuffix}` : ""}
             </li>
           ))}
         </ul>
@@ -139,13 +144,13 @@ export default async function DishPage({ params }: DishPageProps) {
 
       {dish.nutrition && (
         <section>
-          <h2>Nutrition (optional)</h2>
+          <h2>{messages.dishPage.nutritionOptional}</h2>
           <ul>
-            <li>Calories: {dish.nutrition.calories ?? "N/A"}</li>
-            <li>Protein: {dish.nutrition.proteinG ?? "N/A"}g</li>
-            <li>Carbs: {dish.nutrition.carbsG ?? "N/A"}g</li>
-            <li>Fat: {dish.nutrition.fatG ?? "N/A"}g</li>
-            <li>Sodium: {dish.nutrition.sodiumMg ?? "N/A"}mg</li>
+            <li>{messages.dishPage.calories}: {dish.nutrition.calories ?? messages.dishPage.na}</li>
+            <li>{messages.dishPage.protein}: {dish.nutrition.proteinG ?? messages.dishPage.na}g</li>
+            <li>{messages.dishPage.carbs}: {dish.nutrition.carbsG ?? messages.dishPage.na}g</li>
+            <li>{messages.dishPage.fat}: {dish.nutrition.fatG ?? messages.dishPage.na}g</li>
+            <li>{messages.dishPage.sodium}: {dish.nutrition.sodiumMg ?? messages.dishPage.na}mg</li>
           </ul>
           {dish.nutrition.notes && <p>{dish.nutrition.notes}</p>}
         </section>

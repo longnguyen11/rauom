@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useCart } from "@/components/cart-context";
 import { formatCurrency } from "@/lib/format";
+import { getMessages, type Locale } from "@/lib/i18n-dictionary";
 import type { FulfillmentType, Timeslot } from "@/lib/types";
 
 interface EstimateResponse {
@@ -20,8 +21,33 @@ interface EstimateResponse {
   };
 }
 
-export function CheckoutForm() {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function toPhoneDigits(value: string): string {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
+
+function formatPhoneNumber(value: string): string {
+  const digits = toPhoneDigits(value);
+
+  if (digits.length === 0) {
+    return "";
+  }
+
+  if (digits.length <= 3) {
+    return `(${digits}`;
+  }
+
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  }
+
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+export function CheckoutForm({ locale }: { locale: Locale }) {
   const { items, subtotalCents, clearCart } = useCart();
+  const t = getMessages(locale);
 
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>("delivery");
   const [timeslots, setTimeslots] = useState<Timeslot[]>([]);
@@ -47,7 +73,6 @@ export function CheckoutForm() {
     city: "Longwood",
     state: "FL",
     zip: "",
-    turnstileToken: "",
   });
 
   const cartPayload = useMemo(
@@ -130,14 +155,14 @@ export function CheckoutForm() {
 
         if (!response.ok) {
           setEstimate(null);
-          setError(data.error ?? "Could not estimate this order.");
+          setError(data.error ?? t.checkout.estimateFailed);
           return;
         }
 
         setEstimate(data);
       } catch {
         setEstimate(null);
-        setError("Could not estimate this order.");
+        setError(t.checkout.estimateFailed);
       } finally {
         setIsEstimating(false);
       }
@@ -152,10 +177,11 @@ export function CheckoutForm() {
     formValues.city,
     formValues.state,
     formValues.zip,
+    t.checkout.estimateFailed,
   ]);
 
   if (items.length === 0) {
-    return <p className="checkout-empty">Your cart is empty. Add dishes first.</p>;
+    return <p className="checkout-empty">{t.checkout.empty}</p>;
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -163,8 +189,21 @@ export function CheckoutForm() {
     setError(null);
     setSuccess(null);
 
+    const normalizedEmail = formValues.email.trim().toLowerCase();
+    const normalizedPhone = formatPhoneNumber(formValues.phone);
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setError(t.checkout.invalidEmail);
+      return;
+    }
+
+    if (toPhoneDigits(normalizedPhone).length !== 10) {
+      setError(t.checkout.invalidPhone);
+      return;
+    }
+
     if (!selectedTimeslot) {
-      setError("Please choose a fulfillment slot.");
+      setError(t.checkout.chooseSlotError);
       return;
     }
 
@@ -176,13 +215,12 @@ export function CheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: formValues.customerName,
-          email: formValues.email,
-          phone: formValues.phone,
+          email: normalizedEmail,
+          phone: normalizedPhone,
           fulfillmentType,
           timeslotId: selectedTimeslot,
           paymentMethod: formValues.paymentMethod,
           notes: formValues.notes || undefined,
-          turnstileToken: formValues.turnstileToken || undefined,
           idempotencyKey: nanoid(24),
           items: cartPayload,
           deliveryAddress:
@@ -204,14 +242,14 @@ export function CheckoutForm() {
       };
 
       if (!response.ok || !data.order) {
-        setError(data.error ?? "Order submission failed. Please retry.");
+        setError(data.error ?? t.checkout.orderFailed);
         return;
       }
 
       setSuccess(data.order);
       clearCart();
     } catch {
-      setError("Order submission failed. Please retry.");
+      setError(t.checkout.orderFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -220,9 +258,9 @@ export function CheckoutForm() {
   return (
     <form className="checkout-form" onSubmit={submitOrder}>
       <section className="checkout-section">
-        <h2>Contact</h2>
+        <h2>{t.checkout.contactTitle}</h2>
         <label>
-          Name
+          {t.checkout.name}
           <input
             required
             value={formValues.customerName}
@@ -233,10 +271,12 @@ export function CheckoutForm() {
         </label>
 
         <label>
-          Email
+          {t.checkout.email}
           <input
             required
             type="email"
+            autoComplete="email"
+            inputMode="email"
             value={formValues.email}
             onChange={(event) =>
               setFormValues((current) => ({ ...current, email: event.target.value }))
@@ -245,40 +285,48 @@ export function CheckoutForm() {
         </label>
 
         <label>
-          Phone
+          {t.checkout.phone}
           <input
             required
+            autoComplete="tel"
+            inputMode="numeric"
+            placeholder="(555) 123-4567"
+            maxLength={14}
+            pattern="\\(\\d{3}\\) \\d{3}-\\d{4}"
             value={formValues.phone}
             onChange={(event) =>
-              setFormValues((current) => ({ ...current, phone: event.target.value }))
+              setFormValues((current) => ({
+                ...current,
+                phone: formatPhoneNumber(event.target.value),
+              }))
             }
           />
         </label>
       </section>
 
       <section className="checkout-section">
-        <h2>Fulfillment</h2>
-        <div className="toggle-row" role="radiogroup" aria-label="Choose delivery or pickup">
+        <h2>{t.checkout.fulfillmentTitle}</h2>
+        <div className="toggle-row" role="radiogroup" aria-label={t.checkout.fulfillmentAria}>
           <button
             type="button"
             className={fulfillmentType === "delivery" ? "chip active" : "chip"}
             onClick={() => setFulfillmentType("delivery")}
           >
-            Delivery
+            {t.checkout.delivery}
           </button>
           <button
             type="button"
             className={fulfillmentType === "pickup" ? "chip active" : "chip"}
             onClick={() => setFulfillmentType("pickup")}
           >
-            Pickup
+            {t.checkout.pickup}
           </button>
         </div>
 
         {fulfillmentType === "delivery" && (
           <div className="address-grid">
             <label>
-              Address line 1
+              {t.checkout.address1}
               <input
                 required
                 value={formValues.addressLine1}
@@ -289,7 +337,7 @@ export function CheckoutForm() {
             </label>
 
             <label>
-              Address line 2
+              {t.checkout.address2}
               <input
                 value={formValues.addressLine2}
                 onChange={(event) =>
@@ -299,7 +347,7 @@ export function CheckoutForm() {
             </label>
 
             <label>
-              City
+              {t.checkout.city}
               <input
                 required
                 value={formValues.city}
@@ -310,7 +358,7 @@ export function CheckoutForm() {
             </label>
 
             <label>
-              State
+              {t.checkout.state}
               <input
                 required
                 value={formValues.state}
@@ -321,7 +369,7 @@ export function CheckoutForm() {
             </label>
 
             <label>
-              ZIP
+              {t.checkout.zip}
               <input
                 required
                 value={formValues.zip}
@@ -334,13 +382,13 @@ export function CheckoutForm() {
         )}
 
         <label>
-          Fulfillment slot
+          {t.checkout.slot}
           <select
             required
             value={selectedTimeslot}
             onChange={(event) => setSelectedTimeslot(event.target.value)}
           >
-            <option value="">Select a slot</option>
+            <option value="">{t.checkout.slotPlaceholder}</option>
             {timeslots.map((slot) => (
               <option key={slot.id} value={slot.id}>
                 {slot.dateLocal} {slot.startTimeLocal} ({slot.slotType})
@@ -351,24 +399,24 @@ export function CheckoutForm() {
       </section>
 
       <section className="checkout-section">
-        <h2>Payment and Notes</h2>
+        <h2>{t.checkout.paymentNotesTitle}</h2>
 
         <label>
-          Payment method
+          {t.checkout.paymentMethod}
           <select
             value={formValues.paymentMethod}
             onChange={(event) =>
               setFormValues((current) => ({ ...current, paymentMethod: event.target.value }))
             }
           >
-            <option value="cash">Cash</option>
-            <option value="zelle">Zelle</option>
-            <option value="venmo">Venmo</option>
+            <option value="cash">{t.checkout.cash}</option>
+            <option value="zelle">{t.checkout.zelle}</option>
+            <option value="venmo">{t.checkout.venmo}</option>
           </select>
         </label>
 
         <label>
-          Order notes
+          {t.checkout.orderNotes}
           <textarea
             rows={4}
             value={formValues.notes}
@@ -377,41 +425,50 @@ export function CheckoutForm() {
             }
           />
         </label>
-
-        <label>
-          Turnstile token (required only when Turnstile secret is configured)
-          <input
-            value={formValues.turnstileToken}
-            onChange={(event) =>
-              setFormValues((current) => ({ ...current, turnstileToken: event.target.value }))
-            }
-          />
-        </label>
       </section>
 
       <section className="checkout-section checkout-summary">
-        <h2>Estimated total</h2>
+        <h2>{t.checkout.summaryTitle}</h2>
+        <h3 className="checkout-tally-title">{t.checkout.itemsTitle}</h3>
+        <ul className="checkout-tally-list">
+          {items.map((item) => {
+            const lineTotalCents = item.priceCents * item.quantity;
+
+            return (
+              <li key={item.dishId} className="checkout-tally-item">
+                <div>
+                  <p className="checkout-tally-name">{item.name}</p>
+                  <p className="checkout-tally-meta">
+                    {t.checkout.quantityLabel}: {item.quantity} · {formatCurrency(item.priceCents)}{" "}
+                    {t.common.each}
+                  </p>
+                </div>
+                <strong>{formatCurrency(lineTotalCents)}</strong>
+              </li>
+            );
+          })}
+        </ul>
         <p>
-          Cart subtotal: <strong>{formatCurrency(subtotalCents)}</strong>
+          {t.checkout.cartSubtotal}: <strong>{formatCurrency(subtotalCents)}</strong>
         </p>
 
         {isEstimating ? (
-          <p>Updating estimate...</p>
+          <p>{t.checkout.updatingEstimate}</p>
         ) : estimate ? (
           <>
             <p>
-              Delivery fee: <strong>{formatCurrency(estimate.deliveryFeeCents)}</strong>
+              {t.checkout.deliveryFee}: <strong>{formatCurrency(estimate.deliveryFeeCents)}</strong>
             </p>
             {estimate.quote && (
               <p>
-                Distance: <strong>{estimate.quote.distanceMiles.toFixed(1)} miles</strong>
+                {t.checkout.distance}: <strong>{estimate.quote.distanceMiles.toFixed(1)} {t.checkout.miles}</strong>
               </p>
             )}
             <p>
-              Tax: <strong>{formatCurrency(estimate.taxAmountCents)}</strong>
+              {t.checkout.tax}: <strong>{formatCurrency(estimate.taxAmountCents)}</strong>
             </p>
             <p>
-              Final total: <strong>{formatCurrency(estimate.totalCents)}</strong>
+              {t.checkout.total}: <strong>{formatCurrency(estimate.totalCents)}</strong>
             </p>
             <ul className="estimate-notes">
               {estimate.notes.map((note) => (
@@ -420,7 +477,7 @@ export function CheckoutForm() {
             </ul>
           </>
         ) : (
-          <p>Enter fulfillment details to calculate total.</p>
+          <p>{t.checkout.enterDetails}</p>
         )}
       </section>
 
@@ -428,14 +485,14 @@ export function CheckoutForm() {
 
       {success && (
         <div className="form-success">
-          <p>Order received: {success.orderNumber}</p>
-          <p>Total: {formatCurrency(success.totalCents)}</p>
-          <p>Status: {success.status}</p>
+          <p>{t.checkout.orderReceived}: {success.orderNumber}</p>
+          <p>{t.checkout.total}: {formatCurrency(success.totalCents)}</p>
+          <p>{t.checkout.status}: {success.status}</p>
         </div>
       )}
 
       <button className="btn-primary checkout-submit" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Submitting..." : "Submit order"}
+        {isSubmitting ? t.checkout.submitting : t.checkout.submit}
       </button>
     </form>
   );
