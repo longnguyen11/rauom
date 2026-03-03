@@ -32,6 +32,13 @@ If native Windows deploy fails, use WSL or GitHub Actions (section 8).
 2. Create account and verify your email.
 3. In Cloudflare dashboard, open **Billing** and add a payment method.
 4. In dashboard, note your **Account ID** (right sidebar or account settings).
+5. Complete Workers onboarding once and register a `workers.dev` subdomain:
+   - Open `https://dash.cloudflare.com/<your-account-id>/workers/onboarding`
+   - Choose any available subdomain (example: `rauom-prod`)
+   - Finish onboarding
+
+Important: GitHub Actions runs in non-interactive mode. If this onboarding is not done first, deploy fails with:
+`You need to register a workers.dev subdomain before publishing to workers.dev`.
 
 ### 1.2 Install tooling on your machine
 

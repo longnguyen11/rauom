@@ -1,0 +1,18 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-label="Banh Cuon Tray demo image">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f0e6" />
+      <stop offset="100%" stop-color="#d9a441" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)" />
+  <ellipse cx="600" cy="500" rx="370" ry="220" fill="#ffffff" opacity="0.95" />
+  <ellipse cx="600" cy="500" rx="320" ry="180" fill="#f4f4ef" />
+  <ellipse cx="560" cy="500" rx="120" ry="70" fill="#efe8db" />
+  <ellipse cx="670" cy="470" rx="95" ry="58" fill="#f1e9dc" />
+  <ellipse cx="670" cy="560" rx="110" ry="66" fill="#eee6d9" />
+  <circle cx="430" cy="600" r="35" fill="#7fae53" />
+  <circle cx="785" cy="365" r="28" fill="#4e7a31" />
+  <text x="600" y="180" text-anchor="middle" font-size="72" font-family="Georgia, serif" fill="#4e7a31">Banh Cuon Tray</text>
+  <text x="600" y="245" text-anchor="middle" font-size="34" font-family="Arial, sans-serif" fill="#5f5a4e">Demo image placeholder</text>
+</svg>
