@@ -1,4 +1,4 @@
-﻿import { dbAll, dbRun } from "@/lib/db";
+import { dbAll, dbFirst, dbRun } from "@/lib/db";
 import { MOCK_DISHES } from "@/lib/mock-data";
 import type { Dish } from "@/lib/types";
 
@@ -229,6 +229,8 @@ interface UpsertDishInput {
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
+  imageUrl?: string;
+  imageAltText?: string;
   ingredients?: Array<{
     name: string;
     isAllergen: boolean;
@@ -288,6 +290,36 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
           ingredient.isAllergen ? 1 : 0,
         ],
       );
+    }
+  }
+
+  if (typeof input.imageUrl === "string") {
+    const imageUrl = input.imageUrl.trim();
+    if (imageUrl.length > 0) {
+      const imageAltText = input.imageAltText?.trim() || `${input.name} image`;
+      const existingImage = await dbFirst<{ id: string }>(
+        `SELECT id
+         FROM dish_images
+         WHERE dish_id = ?
+         ORDER BY sort_order ASC, id ASC
+         LIMIT 1`,
+        [id],
+      );
+
+      if (existingImage) {
+        await dbRun(
+          `UPDATE dish_images
+           SET url = ?, alt_text = ?, sort_order = 0
+           WHERE id = ?`,
+          [imageUrl, imageAltText, existingImage.id],
+        );
+      } else {
+        await dbRun(
+          `INSERT INTO dish_images (id, dish_id, url, alt_text, sort_order)
+           VALUES (?, ?, ?, ?, 0)`,
+          [`img_${crypto.randomUUID()}`, id, imageUrl, imageAltText],
+        );
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatCurrency } from "@/lib/format";
 import type { AdminOrderSummary, Dish } from "@/lib/types";
@@ -13,6 +13,24 @@ interface AdminDashboardProps {
 type AdminTab = "workflow" | "current_dishes" | "dish_editor" | "shopping_list";
 
 type DishStatusFilter = "available" | Dish["status"] | "all";
+type ShoppingOrderStatus = "pending_confirmation" | "confirmed" | "preparing";
+
+interface ShoppingSummary {
+  statuses: ShoppingOrderStatus[];
+  orderCount: number;
+  lineItemCount: number;
+  dishes: Array<{
+    dishId: string;
+    dishName: string;
+    totalQuantity: number;
+  }>;
+  ingredients: Array<{
+    name: string;
+    isAllergen: boolean;
+    requiredUnits: number;
+    usedByDishes: string[];
+  }>;
+}
 
 interface DishFormState {
   id?: string;
@@ -20,6 +38,8 @@ interface DishFormState {
   name: string;
   shortDescription: string;
   longDescription: string;
+  imageUrl: string;
+  imageAltText: string;
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
@@ -32,6 +52,8 @@ const EMPTY_DISH_FORM: DishFormState = {
   name: "",
   shortDescription: "",
   longDescription: "",
+  imageUrl: "",
+  imageAltText: "",
   priceCents: 0,
   leadTimeDays: 1,
   status: "draft",
@@ -54,6 +76,12 @@ const ORDER_STATUS_OPTIONS = [
   "completed",
   "cancelled",
 ] as const;
+
+const SHOPPING_ORDER_STATUS_OPTIONS: ShoppingOrderStatus[] = [
+  "pending_confirmation",
+  "confirmed",
+  "preparing",
+];
 
 function parseCsvList(value: string): string[] {
   return value
@@ -100,6 +128,8 @@ function toDishFormState(dish: Dish): DishFormState {
     name: dish.name,
     shortDescription: dish.shortDescription,
     longDescription: dish.longDescription,
+    imageUrl: dish.images[0]?.url ?? "",
+    imageAltText: dish.images[0]?.altText ?? dish.name,
     priceCents: dish.priceCents,
     leadTimeDays: dish.leadTimeDays as 1 | 2 | 3,
     status: dish.status,
@@ -122,13 +152,15 @@ export function AdminDashboard({
   const [priceDrafts, setPriceDrafts] = useState<Record<string, number>>(
     Object.fromEntries(initialDishes.map((dish) => [dish.id, dish.priceCents])),
   );
-  const [shoppingStatuses, setShoppingStatuses] = useState<Record<Dish["status"], boolean>>({
-    draft: false,
-    scheduled: true,
-    live: true,
-    archived: false,
-    sold_out: false,
+  const [shoppingOrderStatuses, setShoppingOrderStatuses] = useState<
+    Record<ShoppingOrderStatus, boolean>
+  >({
+    pending_confirmation: true,
+    confirmed: true,
+    preparing: false,
   });
+  const [shoppingSummary, setShoppingSummary] = useState<ShoppingSummary | null>(null);
+  const [isShoppingLoading, setIsShoppingLoading] = useState(false);
 
   async function saveDish(payload: {
     id?: string;
@@ -136,6 +168,8 @@ export function AdminDashboard({
     name: string;
     shortDescription: string;
     longDescription: string;
+    imageUrl?: string;
+    imageAltText?: string;
     priceCents: number;
     leadTimeDays: 1 | 2 | 3;
     status: Dish["status"];
@@ -223,6 +257,8 @@ export function AdminDashboard({
       name: dish.name,
       shortDescription: dish.shortDescription,
       longDescription: dish.longDescription,
+      imageUrl: dish.images[0]?.url,
+      imageAltText: dish.images[0]?.altText ?? dish.name,
       priceCents: Math.round(draftValue),
       leadTimeDays: dish.leadTimeDays as 1 | 2 | 3,
       status: dish.status,
@@ -246,6 +282,8 @@ export function AdminDashboard({
       name: dishForm.name.trim(),
       shortDescription: dishForm.shortDescription.trim(),
       longDescription: dishForm.longDescription.trim(),
+      imageUrl: dishForm.imageUrl.trim() || undefined,
+      imageAltText: dishForm.imageAltText.trim() || undefined,
       priceCents: Math.round(Number(dishForm.priceCents)),
       leadTimeDays: dishForm.leadTimeDays,
       status: dishForm.status,
@@ -280,59 +318,65 @@ export function AdminDashboard({
     return dishes.filter((dish) => dish.status === dishStatusFilter);
   }, [dishStatusFilter, dishes]);
 
-  const shoppingList = useMemo(() => {
-    const selectedStatuses = new Set(
-      (Object.keys(shoppingStatuses) as Dish["status"][]).filter(
-        (status) => shoppingStatuses[status],
+  const selectedShoppingStatuses = useMemo(
+    () =>
+      SHOPPING_ORDER_STATUS_OPTIONS.filter(
+        (status) => shoppingOrderStatuses[status],
       ),
-    );
+    [shoppingOrderStatuses],
+  );
 
-    const selectedDishes = dishes.filter((dish) => selectedStatuses.has(dish.status));
-    const ingredientMap = new Map<
-      string,
-      { name: string; dishCount: number; isAllergen: boolean }
-    >();
+  const shoppingListText = useMemo(() => {
+    if (!shoppingSummary) {
+      return "";
+    }
 
-    for (const dish of selectedDishes) {
-      const seenInDish = new Set<string>();
-      for (const ingredient of dish.ingredients) {
-        const key = ingredient.name.trim().toLowerCase();
-        if (!key || seenInDish.has(key)) {
-          continue;
+    return shoppingSummary.ingredients
+      .map(
+        (item) =>
+          `- ${item.name}${item.isAllergen ? " (allergen)" : ""} | qty units: ${item.requiredUnits} | dishes: ${item.usedByDishes.join(", ")}`,
+      )
+      .join("\n");
+  }, [shoppingSummary]);
+
+  useEffect(() => {
+    async function loadShoppingSummary() {
+      if (activeTab !== "shopping_list") {
+        return;
+      }
+
+      setIsShoppingLoading(true);
+      setError(null);
+
+      try {
+        const query = new URLSearchParams();
+        for (const status of selectedShoppingStatuses) {
+          query.append("status", status);
         }
-        seenInDish.add(key);
 
-        const existing = ingredientMap.get(key);
-        if (existing) {
-          existing.dishCount += 1;
-          existing.isAllergen = existing.isAllergen || ingredient.isAllergen;
-        } else {
-          ingredientMap.set(key, {
-            name: ingredient.name.trim(),
-            dishCount: 1,
-            isAllergen: ingredient.isAllergen,
-          });
+        const response = await fetch(`/api/admin/shopping-list?${query.toString()}`);
+        const data = (await response.json()) as {
+          error?: string;
+          summary?: ShoppingSummary;
+        };
+
+        if (!response.ok || !data.summary) {
+          setError(data.error ?? "Could not load shopping list.");
+          setShoppingSummary(null);
+          return;
         }
+
+        setShoppingSummary(data.summary);
+      } catch {
+        setError("Could not load shopping list.");
+        setShoppingSummary(null);
+      } finally {
+        setIsShoppingLoading(false);
       }
     }
 
-    const items = [...ingredientMap.values()].sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
-
-    const text = items
-      .map(
-        (item) =>
-          `- ${item.name}${item.isAllergen ? " (allergen)" : ""} | used by ${item.dishCount} dish(es)`,
-      )
-      .join("\n");
-
-    return {
-      selectedDishCount: selectedDishes.length,
-      items,
-      text,
-    };
-  }, [dishes, shoppingStatuses]);
+    void loadShoppingSummary();
+  }, [activeTab, selectedShoppingStatuses, orders]);
 
   return (
     <section className="admin-shell">
@@ -572,6 +616,34 @@ export function AdminDashboard({
             </label>
 
             <label>
+              Primary image URL
+              <input
+                type="url"
+                placeholder="https://..."
+                value={dishForm.imageUrl}
+                onChange={(event) =>
+                  setDishForm((current) => ({
+                    ...current,
+                    imageUrl: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label>
+              Image alt text
+              <input
+                value={dishForm.imageAltText}
+                onChange={(event) =>
+                  setDishForm((current) => ({
+                    ...current,
+                    imageAltText: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label>
               Ingredients (comma or new line separated)
               <textarea
                 rows={3}
@@ -669,16 +741,19 @@ export function AdminDashboard({
       {activeTab === "shopping_list" && (
         <div className="admin-card">
           <h2>Shopping List Generator</h2>
-          <p>Build ingredient list from selected dish statuses.</p>
+          <p>
+            Built from open orders. Ingredient quantities scale by ordered dish count
+            (for example, 3 Pho orders means Pho ingredients count as 3 units each).
+          </p>
 
           <div className="admin-status-grid">
-            {STATUS_OPTIONS.map((status) => (
+            {SHOPPING_ORDER_STATUS_OPTIONS.map((status) => (
               <label key={status} className="admin-status-option">
                 <input
                   type="checkbox"
-                  checked={shoppingStatuses[status]}
+                  checked={shoppingOrderStatuses[status]}
                   onChange={(event) =>
-                    setShoppingStatuses((current) => ({
+                    setShoppingOrderStatuses((current) => ({
                       ...current,
                       [status]: event.target.checked,
                     }))
@@ -689,38 +764,61 @@ export function AdminDashboard({
             ))}
           </div>
 
-          <p>
-            Dishes included: <strong>{shoppingList.selectedDishCount}</strong> | Ingredients:{" "}
-            <strong>{shoppingList.items.length}</strong>
-          </p>
+          {isShoppingLoading ? (
+            <p>Loading shopping list...</p>
+          ) : shoppingSummary ? (
+            <>
+              <p>
+                Orders included: <strong>{shoppingSummary.orderCount}</strong> | Line items:{" "}
+                <strong>{shoppingSummary.lineItemCount}</strong> | Ingredients:{" "}
+                <strong>{shoppingSummary.ingredients.length}</strong>
+              </p>
 
-          <ul className="admin-list">
-            {shoppingList.items.map((item) => (
-              <li key={item.name}>
-                <div>
-                  <strong>{item.name}</strong>{" "}
-                  {item.isAllergen ? <span>(allergen)</span> : null}
-                </div>
-                <div>Used by {item.dishCount} dish(es)</div>
-              </li>
-            ))}
-          </ul>
+              <h3 className="admin-subheading">Dish Totals</h3>
+              <ul className="admin-list">
+                {shoppingSummary.dishes.map((dish) => (
+                  <li key={dish.dishId}>
+                    <div>
+                      <strong>{dish.dishName}</strong>
+                    </div>
+                    <div>Total ordered quantity: {dish.totalQuantity}</div>
+                  </li>
+                ))}
+              </ul>
 
-          <div className="admin-toolbar">
-            <button
-              className="btn-secondary"
-              type="button"
-              onClick={() => {
-                if (shoppingList.text.length === 0 || !navigator.clipboard) {
-                  return;
-                }
-                void navigator.clipboard.writeText(shoppingList.text);
-                setMessage("Shopping list copied.");
-              }}
-            >
-              Copy list
-            </button>
-          </div>
+              <h3 className="admin-subheading">Ingredient Totals</h3>
+              <ul className="admin-list">
+                {shoppingSummary.ingredients.map((item) => (
+                  <li key={item.name}>
+                    <div>
+                      <strong>{item.name}</strong>{" "}
+                      {item.isAllergen ? <span>(allergen)</span> : null}
+                    </div>
+                    <div>Required units: {item.requiredUnits}</div>
+                    <div>Used by: {item.usedByDishes.join(", ")}</div>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="admin-toolbar">
+                <button
+                  className="btn-secondary"
+                  type="button"
+                  onClick={() => {
+                    if (shoppingListText.length === 0 || !navigator.clipboard) {
+                      return;
+                    }
+                    void navigator.clipboard.writeText(shoppingListText);
+                    setMessage("Shopping list copied.");
+                  }}
+                >
+                  Copy list
+                </button>
+              </div>
+            </>
+          ) : (
+            <p>No matching open orders yet for selected statuses.</p>
+          )}
         </div>
       )}
     </section>

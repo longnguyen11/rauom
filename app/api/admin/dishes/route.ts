@@ -13,6 +13,8 @@ const createSchema = z.object({
   priceCents: z.number().int().min(100).max(50000),
   leadTimeDays: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   status: z.enum(["draft", "scheduled", "live", "archived", "sold_out"]),
+  imageUrl: z.string().url().max(1200).optional(),
+  imageAltText: z.string().min(2).max(220).optional(),
   ingredients: z
     .array(
       z.object({

@@ -566,6 +566,181 @@ interface AdminOrderRow {
   kitchen_group: "cook_now" | "ready_from_prep" | "later";
 }
 
+interface AdminShoppingRow {
+  order_id: string;
+  order_number: string;
+  order_status: OrderStatus;
+  order_item_id: string;
+  dish_id: string;
+  dish_name_snapshot: string;
+  quantity: number;
+  ingredient_name: string | null;
+  ingredient_is_allergen: number | null;
+}
+
+export interface AdminShoppingDishTotal {
+  dishId: string;
+  dishName: string;
+  totalQuantity: number;
+}
+
+export interface AdminShoppingIngredientTotal {
+  name: string;
+  isAllergen: boolean;
+  requiredUnits: number;
+  usedByDishes: string[];
+}
+
+export interface AdminShoppingListSummary {
+  statuses: OrderStatus[];
+  orderCount: number;
+  lineItemCount: number;
+  dishes: AdminShoppingDishTotal[];
+  ingredients: AdminShoppingIngredientTotal[];
+}
+
+const SHOPPING_ELIGIBLE_STATUSES: OrderStatus[] = [
+  "pending_confirmation",
+  "confirmed",
+  "preparing",
+];
+
+function normalizeShoppingStatuses(
+  statuses?: OrderStatus[],
+): OrderStatus[] {
+  const source =
+    statuses && statuses.length > 0
+      ? statuses
+      : (["pending_confirmation", "confirmed"] as OrderStatus[]);
+
+  const seen = new Set<OrderStatus>();
+  const result: OrderStatus[] = [];
+
+  for (const status of source) {
+    if (!SHOPPING_ELIGIBLE_STATUSES.includes(status) || seen.has(status)) {
+      continue;
+    }
+    seen.add(status);
+    result.push(status);
+  }
+
+  if (result.length === 0) {
+    return ["pending_confirmation", "confirmed"];
+  }
+
+  return result;
+}
+
+export async function getAdminShoppingList(
+  statuses?: OrderStatus[],
+): Promise<AdminShoppingListSummary> {
+  const normalizedStatuses = normalizeShoppingStatuses(statuses);
+  const placeholders = normalizedStatuses.map(() => "?").join(", ");
+
+  const rows = await dbAll<AdminShoppingRow>(
+    `SELECT
+      o.id AS order_id,
+      o.order_number,
+      o.status AS order_status,
+      oi.id AS order_item_id,
+      oi.dish_id,
+      oi.dish_name_snapshot,
+      oi.quantity,
+      i.name AS ingredient_name,
+      i.is_allergen AS ingredient_is_allergen
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    LEFT JOIN ingredients i ON i.dish_id = oi.dish_id
+    WHERE o.status IN (${placeholders})
+    ORDER BY o.created_at_utc DESC, o.id, oi.id`,
+    normalizedStatuses,
+  );
+
+  const orderIds = new Set<string>();
+  const lineIds = new Set<string>();
+
+  const dishTotals = new Map<string, AdminShoppingDishTotal>();
+  const seenDishPerLine = new Set<string>();
+
+  const ingredientTotals = new Map<
+    string,
+    {
+      name: string;
+      isAllergen: boolean;
+      requiredUnits: number;
+      usedByDishes: Set<string>;
+    }
+  >();
+  const seenIngredientPerLine = new Set<string>();
+
+  for (const row of rows) {
+    orderIds.add(row.order_id);
+    lineIds.add(row.order_item_id);
+
+    if (!seenDishPerLine.has(row.order_item_id)) {
+      seenDishPerLine.add(row.order_item_id);
+      const existingDish = dishTotals.get(row.dish_id);
+      if (existingDish) {
+        existingDish.totalQuantity += row.quantity;
+      } else {
+        dishTotals.set(row.dish_id, {
+          dishId: row.dish_id,
+          dishName: row.dish_name_snapshot,
+          totalQuantity: row.quantity,
+        });
+      }
+    }
+
+    const ingredientName = row.ingredient_name?.trim();
+    if (!ingredientName) {
+      continue;
+    }
+
+    const ingredientKey = ingredientName.toLowerCase();
+    const lineIngredientKey = `${row.order_item_id}::${ingredientKey}`;
+    if (seenIngredientPerLine.has(lineIngredientKey)) {
+      continue;
+    }
+    seenIngredientPerLine.add(lineIngredientKey);
+
+    const existingIngredient = ingredientTotals.get(ingredientKey);
+    if (existingIngredient) {
+      existingIngredient.requiredUnits += row.quantity;
+      existingIngredient.isAllergen =
+        existingIngredient.isAllergen || row.ingredient_is_allergen === 1;
+      existingIngredient.usedByDishes.add(row.dish_name_snapshot);
+    } else {
+      ingredientTotals.set(ingredientKey, {
+        name: ingredientName,
+        isAllergen: row.ingredient_is_allergen === 1,
+        requiredUnits: row.quantity,
+        usedByDishes: new Set([row.dish_name_snapshot]),
+      });
+    }
+  }
+
+  const dishes = [...dishTotals.values()].sort((a, b) =>
+    b.totalQuantity - a.totalQuantity || a.dishName.localeCompare(b.dishName),
+  );
+
+  const ingredients = [...ingredientTotals.values()]
+    .map((ingredient) => ({
+      name: ingredient.name,
+      isAllergen: ingredient.isAllergen,
+      requiredUnits: ingredient.requiredUnits,
+      usedByDishes: [...ingredient.usedByDishes].sort((a, b) => a.localeCompare(b)),
+    }))
+    .sort((a, b) => b.requiredUnits - a.requiredUnits || a.name.localeCompare(b.name));
+
+  return {
+    statuses: normalizedStatuses,
+    orderCount: orderIds.size,
+    lineItemCount: lineIds.size,
+    dishes,
+    ingredients,
+  };
+}
+
 export async function listAdminOrders(limit = 100): Promise<AdminOrderSummary[]> {
   const rows = await dbAll<AdminOrderRow>(
     `SELECT
