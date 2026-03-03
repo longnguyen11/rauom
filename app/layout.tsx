@@ -50,10 +50,8 @@ export default function RootLayout({
 
               <nav className="site-nav" aria-label="Main navigation">
                 <Link href="/">Home</Link>
-                <Link href="/archive">Archive</Link>
                 <Link href="/how-ordering-works">How Ordering Works</Link>
                 <Link href="/checkout">Checkout</Link>
-                <Link href="/admin">Admin</Link>
               </nav>
             </header>
 
