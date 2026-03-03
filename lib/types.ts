@@ -1,0 +1,139 @@
+﻿export type DishStatus = "draft" | "scheduled" | "live" | "archived" | "sold_out";
+
+export type FulfillmentType = "delivery" | "pickup";
+
+export type PaymentMethod = "cash" | "zelle" | "venmo";
+
+export type OrderStatus =
+  | "new"
+  | "pending_confirmation"
+  | "confirmed"
+  | "preparing"
+  | "completed"
+  | "cancelled";
+
+export type KitchenGroup = "cook_now" | "ready_from_prep" | "later";
+
+export interface DishImage {
+  id: string;
+  url: string;
+  altText: string;
+  sortOrder: number;
+}
+
+export interface DishNutrition {
+  calories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  sodiumMg: number | null;
+  notes: string | null;
+}
+
+export interface Dish {
+  id: string;
+  slug: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  priceCents: number;
+  currency: string;
+  status: DishStatus;
+  leadTimeDays: number;
+  isFeaturedWeek: boolean;
+  availableFromUtc: string | null;
+  availableToUtc: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  images: DishImage[];
+  ingredients: { name: string; isAllergen: boolean }[];
+  dietaryTags: { code: string; label: string }[];
+  nutrition: DishNutrition | null;
+}
+
+export interface Timeslot {
+  id: string;
+  dateLocal: string;
+  startTimeLocal: string;
+  endTimeLocal: string;
+  startTimeUtc: string;
+  endTimeUtc: string;
+  slotType: FulfillmentType;
+  capacityLimit: number;
+  reservedCount: number;
+  isOpen: boolean;
+  timezone: string;
+  minimumLeadTimeDays: number;
+}
+
+export interface CartLineInput {
+  dishId: string;
+  quantity: number;
+}
+
+export interface DeliveryAddress {
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+export interface CheckoutEstimateInput {
+  fulfillmentType: FulfillmentType;
+  items: CartLineInput[];
+  deliveryAddress?: DeliveryAddress;
+}
+
+export interface CheckoutSubmitInput extends CheckoutEstimateInput {
+  customerName: string;
+  email: string;
+  phone: string;
+  notes?: string;
+  paymentMethod: PaymentMethod;
+  timeslotId: string;
+  turnstileToken?: string;
+  idempotencyKey: string;
+}
+
+export interface DeliveryQuote {
+  distanceMiles: number;
+  durationMinutes: number;
+  deliveryFeeCents: number;
+  distanceSource: string;
+  destinationLat?: number;
+  destinationLng?: number;
+}
+
+export interface OrderEstimate {
+  currency: "USD";
+  subtotalCents: number;
+  deliveryFeeCents: number;
+  taxRateBps: number;
+  taxAmountCents: number;
+  totalCents: number;
+  leadTimeDays: number;
+  maxDishLeadTimeDays: number;
+  notes: string[];
+  quote?: DeliveryQuote;
+}
+
+export interface OrderSummary {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  totalCents: number;
+  currency: string;
+  fulfillmentType: FulfillmentType;
+  fulfillmentTimeLocal: string;
+  createdAtUtc: string;
+}
+
+export interface AdminOrderSummary extends OrderSummary {
+  customerName: string;
+  email: string;
+  phone: string;
+  paymentMethodSelected: PaymentMethod;
+  paymentStatus: "unpaid" | "paid" | "refunded_partial" | "refunded_full";
+  kitchenGroup: KitchenGroup;
+}

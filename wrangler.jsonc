@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rau-om",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-03-03",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "rau-om"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rauom-db",
+      "database_id": "2e9065bd-93fa-4c01-8a54-424562d69496"
+    }
+  ],
+  "vars": {
+    "NEXTJS_ENV": "production",
+    "ORIGIN_ADDRESS": "720 Orange Ave, Longwood, FL 32750",
+    "ORIGIN_LAT": "28.7001",
+    "ORIGIN_LNG": "-81.3496",
+    "TIMEZONE": "America/New_York",
+    "MIN_LEAD_TIME_DAYS_DEFAULT": "1",
+    "MANUAL_PAYMENT_BUFFER_HOURS": "12",
+    "MAX_DELIVERY_DISTANCE_MI": "30"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

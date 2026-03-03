@@ -1,0 +1,248 @@
+import type { Dish } from "@/lib/types";
+
+export const MOCK_DISHES: Dish[] = [
+  {
+    id: "mock-pho",
+    slug: "pho",
+    name: "Pho",
+    shortDescription:
+      "Classic Vietnamese beef noodle soup with aromatic broth and herbs.",
+    longDescription:
+      "Slow-simmered beef bone broth with rice noodles, sliced beef, basil, rau om, and lime.",
+    priceCents: 1850,
+    currency: "USD",
+    status: "live",
+    leadTimeDays: 1,
+    isFeaturedWeek: true,
+    availableFromUtc: null,
+    availableToUtc: null,
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+    images: [
+      {
+        id: "mock-pho-img",
+        url: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+        altText: "Pho bowl with herbs and sliced beef",
+        sortOrder: 0,
+      },
+    ],
+    ingredients: [
+      { name: "Rice noodles", isAllergen: false },
+      { name: "Beef broth", isAllergen: false },
+      { name: "Fish sauce", isAllergen: true },
+    ],
+    dietaryTags: [{ code: "dairy_free", label: "Dairy-Free" }],
+    nutrition: {
+      calories: 520,
+      proteinG: 34,
+      carbsG: 55,
+      fatG: 16,
+      sodiumMg: 1180,
+      notes: "Estimated values",
+    },
+  },
+  {
+    id: "mock-pho-chay",
+    slug: "pho-chay",
+    name: "Pho Chay",
+    shortDescription:
+      "Vegetarian pho with clear mushroom broth, rice noodles, and fresh herbs.",
+    longDescription:
+      "A light and aromatic plant-based pho with mushrooms, bok choy, scallions, rau om, and lime.",
+    priceCents: 1650,
+    currency: "USD",
+    status: "live",
+    leadTimeDays: 1,
+    isFeaturedWeek: true,
+    availableFromUtc: null,
+    availableToUtc: null,
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+    images: [
+      {
+        id: "mock-pho-chay-img",
+        url: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=1200&q=80",
+        altText: "Pho chay bowl with mushrooms and herbs",
+        sortOrder: 0,
+      },
+    ],
+    ingredients: [
+      { name: "Rice noodles", isAllergen: false },
+      { name: "Mushrooms", isAllergen: false },
+      { name: "Soy sauce", isAllergen: true },
+    ],
+    dietaryTags: [
+      { code: "vegan", label: "Vegan" },
+      { code: "vegetarian", label: "Vegetarian" },
+      { code: "dairy_free", label: "Dairy-Free" },
+    ],
+    nutrition: {
+      calories: 420,
+      proteinG: 15,
+      carbsG: 58,
+      fatG: 12,
+      sodiumMg: 980,
+      notes: "Estimated values",
+    },
+  },
+  {
+    id: "mock-goi-cuon",
+    slug: "goi-cuon",
+    name: "Goi Cuon",
+    shortDescription:
+      "Fresh spring rolls with herbs, vermicelli, and house dipping sauce.",
+    longDescription:
+      "Rice paper rolls with herbs, lettuce, and vermicelli, served chilled with peanut-hoisin dip.",
+    priceCents: 1290,
+    currency: "USD",
+    status: "live",
+    leadTimeDays: 1,
+    isFeaturedWeek: false,
+    availableFromUtc: null,
+    availableToUtc: null,
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+    images: [
+      {
+        id: "mock-goi-cuon-img",
+        url: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1200&q=80",
+        altText: "Goi cuon fresh spring rolls with dip",
+        sortOrder: 0,
+      },
+    ],
+    ingredients: [
+      { name: "Rice paper", isAllergen: false },
+      { name: "Vermicelli", isAllergen: false },
+      { name: "Peanut hoisin sauce", isAllergen: true },
+    ],
+    dietaryTags: [
+      { code: "dairy_free", label: "Dairy-Free" },
+      { code: "gluten_free", label: "Gluten-Free" },
+    ],
+    nutrition: {
+      calories: 290,
+      proteinG: 11,
+      carbsG: 39,
+      fatG: 10,
+      sodiumMg: 640,
+      notes: "Estimated values",
+    },
+  },
+  {
+    id: "mock-bo-kho",
+    slug: "bo-kho",
+    name: "Bo Kho",
+    shortDescription:
+      "Vietnamese lemongrass beef stew with carrots and toasted baguette.",
+    longDescription:
+      "Rich, slow-braised beef stew with lemongrass, star anise, tomato, and herb garnish.",
+    priceCents: 1950,
+    currency: "USD",
+    status: "live",
+    leadTimeDays: 2,
+    isFeaturedWeek: true,
+    availableFromUtc: null,
+    availableToUtc: null,
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+    images: [
+      {
+        id: "mock-bo-kho-img",
+        url: "https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=1200&q=80",
+        altText: "Bo kho beef stew in a bowl",
+        sortOrder: 0,
+      },
+    ],
+    ingredients: [
+      { name: "Beef shank", isAllergen: false },
+      { name: "Lemongrass", isAllergen: false },
+      { name: "Fish sauce", isAllergen: true },
+    ],
+    dietaryTags: [
+      { code: "dairy_free", label: "Dairy-Free" },
+      { code: "spicy", label: "Spicy" },
+    ],
+    nutrition: {
+      calories: 560,
+      proteinG: 38,
+      carbsG: 35,
+      fatG: 29,
+      sodiumMg: 1120,
+      notes: "Estimated values",
+    },
+  },
+  {
+    id: "mock-banh-xeo",
+    slug: "banh-xeo",
+    name: "Banh Xeo",
+    shortDescription:
+      "Crispy turmeric crepe with bean sprouts, herbs, and dipping sauce.",
+    longDescription:
+      "Golden rice-flour crepe folded over savory filling, served with lettuce and herbs for wrapping.",
+    priceCents: 1690,
+    currency: "USD",
+    status: "live",
+    leadTimeDays: 1,
+    isFeaturedWeek: false,
+    availableFromUtc: null,
+    availableToUtc: null,
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+    images: [
+      {
+        id: "mock-banh-xeo-img",
+        url: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+        altText: "Banh xeo crispy crepe with herbs",
+        sortOrder: 0,
+      },
+    ],
+    ingredients: [
+      { name: "Rice flour batter", isAllergen: false },
+      { name: "Bean sprouts", isAllergen: false },
+      { name: "Fish sauce dip", isAllergen: true },
+    ],
+    dietaryTags: [
+      { code: "dairy_free", label: "Dairy-Free" },
+      { code: "gluten_free", label: "Gluten-Free" },
+    ],
+    nutrition: {
+      calories: 510,
+      proteinG: 19,
+      carbsG: 56,
+      fatG: 22,
+      sodiumMg: 930,
+      notes: "Estimated values",
+    },
+  },
+  {
+    id: "mock-bun-rieu-archive",
+    slug: "bun-rieu-crab-noodle-soup",
+    name: "Bun Rieu (Archive)",
+    shortDescription: "Tomato crab noodle soup from a previous weekly menu.",
+    longDescription:
+      "Classic northern tomato-and-crab style broth served in a limited run.",
+    priceCents: 1790,
+    currency: "USD",
+    status: "archived",
+    leadTimeDays: 1,
+    isFeaturedWeek: false,
+    availableFromUtc: null,
+    availableToUtc: null,
+    createdAtUtc: new Date().toISOString(),
+    updatedAtUtc: new Date().toISOString(),
+    images: [
+      {
+        id: "mock-bun-rieu-img",
+        url: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+        altText: "Archived bun rieu bowl",
+        sortOrder: 0,
+      },
+    ],
+    ingredients: [
+      { name: "Rice vermicelli", isAllergen: false },
+      { name: "Crab paste", isAllergen: true },
+    ],
+    dietaryTags: [{ code: "dairy_free", label: "Dairy-Free" }],
+    nutrition: null,
+  },
+];
