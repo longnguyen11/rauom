@@ -341,9 +341,10 @@ main {
 }
 
 .chip.active {
-  background: var(--deep-leaf);
-  color: #fff;
-  border-color: var(--deep-leaf);
+  background: #e6f1db;
+  color: #1f3c12;
+  border-color: #5f8742;
+  box-shadow: inset 0 0 0 1px #5f8742;
 }
 
 .toggle-row {
