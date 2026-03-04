@@ -34,8 +34,11 @@ export interface Dish {
   id: string;
   slug: string;
   name: string;
+  nameVi?: string | null;
   shortDescription: string;
+  shortDescriptionVi?: string | null;
   longDescription: string;
+  longDescriptionVi?: string | null;
   priceCents: number;
   currency: string;
   status: DishStatus;

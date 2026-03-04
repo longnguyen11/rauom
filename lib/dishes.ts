@@ -1,4 +1,5 @@
 import { dbAll, dbFirst, dbRun } from "@/lib/db";
+import type { Locale } from "@/lib/i18n-dictionary";
 import { MOCK_DISHES } from "@/lib/mock-data";
 import type { Dish } from "@/lib/types";
 
@@ -6,8 +7,11 @@ interface DishRow {
   id: string;
   slug: string;
   name: string;
+  name_vi: string | null;
   short_description: string;
+  short_description_vi: string | null;
   long_description: string;
+  long_description_vi: string | null;
   price_cents: number;
   currency: string;
   status: Dish["status"];
@@ -89,8 +93,11 @@ function mapDishRows(
       id: row.id,
       slug: row.slug,
       name: row.name,
+      nameVi: row.name_vi,
       shortDescription: row.short_description,
+      shortDescriptionVi: row.short_description_vi,
       longDescription: row.long_description,
+      longDescriptionVi: row.long_description_vi,
       priceCents: row.price_cents,
       currency: row.currency,
       status: row.status,
@@ -130,29 +137,73 @@ function mapDishRows(
   });
 }
 
+function localizeDish(dish: Dish, locale?: Locale): Dish {
+  if (locale !== "vi") {
+    return dish;
+  }
+
+  return {
+    ...dish,
+    name: dish.nameVi?.trim() || dish.name,
+    shortDescription: dish.shortDescriptionVi?.trim() || dish.shortDescription,
+    longDescription: dish.longDescriptionVi?.trim() || dish.longDescription,
+  };
+}
+
 async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
   const placeholders = statuses.map(() => "?").join(", ");
-  const dishRows = await dbAll<DishRow>(
-    `SELECT
-      id,
-      slug,
-      name,
-      short_description,
-      long_description,
-      price_cents,
-      currency,
-      status,
-      lead_time_days,
-      is_featured_week,
-      available_from_utc,
-      available_to_utc,
-      created_at_utc,
-      updated_at_utc
-    FROM dishes
-    WHERE status IN (${placeholders})
-    ORDER BY is_featured_week DESC, updated_at_utc DESC`,
-    statuses,
-  );
+  let dishRows: DishRow[] = [];
+  try {
+    dishRows = await dbAll<DishRow>(
+      `SELECT
+        id,
+        slug,
+        name,
+        name_vi,
+        short_description,
+        short_description_vi,
+        long_description,
+        long_description_vi,
+        price_cents,
+        currency,
+        status,
+        lead_time_days,
+        is_featured_week,
+        available_from_utc,
+        available_to_utc,
+        created_at_utc,
+        updated_at_utc
+      FROM dishes
+      WHERE status IN (${placeholders})
+      ORDER BY is_featured_week DESC, updated_at_utc DESC`,
+      statuses,
+    );
+  } catch {
+    dishRows = await dbAll<DishRow>(
+      `SELECT
+        id,
+        slug,
+        name,
+        NULL AS name_vi,
+        short_description,
+        NULL AS short_description_vi,
+        long_description,
+        NULL AS long_description_vi,
+        price_cents,
+        currency,
+        status,
+        lead_time_days,
+        is_featured_week,
+        available_from_utc,
+        available_to_utc,
+        created_at_utc,
+        updated_at_utc
+      FROM dishes
+      WHERE status IN (${placeholders})
+      ORDER BY is_featured_week DESC, updated_at_utc DESC`,
+      statuses,
+    );
+  }
 
   if (dishRows.length === 0) {
     return [];
@@ -192,40 +243,51 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
   return mapDishRows(dishRows, imageRows, ingredientRows, dietaryRows, nutritionRows);
 }
 
-export async function listLiveDishes(tagCode?: string): Promise<Dish[]> {
+export async function listLiveDishes(tagCode?: string, locale?: Locale): Promise<Dish[]> {
   const dbDishes = await loadDishesFromDb(["live"]);
   const source = dbDishes.length > 0 ? dbDishes : MOCK_DISHES.filter((dish) => dish.status === "live");
 
-  if (!tagCode) {
-    return source;
+  const filtered = tagCode
+    ? source.filter((dish) => dish.dietaryTags.some((tag) => tag.code === tagCode))
+    : source;
+
+  if (!locale) {
+    return filtered;
   }
 
-  return source.filter((dish) => dish.dietaryTags.some((tag) => tag.code === tagCode));
+  return filtered.map((dish) => localizeDish(dish, locale));
 }
 
-export async function listArchivedDishes(): Promise<Dish[]> {
+export async function listArchivedDishes(locale?: Locale): Promise<Dish[]> {
   const dbDishes = await loadDishesFromDb(["archived"]);
   if (dbDishes.length > 0) {
-    return dbDishes;
+    return locale ? dbDishes.map((dish) => localizeDish(dish, locale)) : dbDishes;
   }
-  return MOCK_DISHES.filter((dish) => dish.status === "archived");
+
+  const archived = MOCK_DISHES.filter((dish) => dish.status === "archived");
+  return locale ? archived.map((dish) => localizeDish(dish, locale)) : archived;
 }
 
-export async function getDishBySlug(slug: string): Promise<Dish | null> {
+export async function getDishBySlug(slug: string, locale?: Locale): Promise<Dish | null> {
   const liveAndArchived = await loadDishesFromDb(["live", "archived", "sold_out"]);
   if (liveAndArchived.length > 0) {
-    return liveAndArchived.find((dish) => dish.slug === slug) ?? null;
+    const dish = liveAndArchived.find((entry) => entry.slug === slug) ?? null;
+    return dish && locale ? localizeDish(dish, locale) : dish;
   }
 
-  return MOCK_DISHES.find((dish) => dish.slug === slug) ?? null;
+  const dish = MOCK_DISHES.find((entry) => entry.slug === slug) ?? null;
+  return dish && locale ? localizeDish(dish, locale) : dish;
 }
 
 interface UpsertDishInput {
   id?: string;
   slug: string;
   name: string;
+  nameVi?: string;
   shortDescription: string;
+  shortDescriptionVi?: string;
   longDescription: string;
+  longDescriptionVi?: string;
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
@@ -240,41 +302,88 @@ interface UpsertDishInput {
 export async function upsertDish(input: UpsertDishInput): Promise<void> {
   const id = input.id ?? `dish_${crypto.randomUUID()}`;
 
-  await dbRun(
-    `INSERT INTO dishes (
-      id,
-      slug,
-      name,
-      short_description,
-      long_description,
-      price_cents,
-      currency,
-      status,
-      lead_time_days,
-      is_featured_week,
-      created_at_utc,
-      updated_at_utc
-    ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    ON CONFLICT(id) DO UPDATE SET
-      slug = excluded.slug,
-      name = excluded.name,
-      short_description = excluded.short_description,
-      long_description = excluded.long_description,
-      price_cents = excluded.price_cents,
-      status = excluded.status,
-      lead_time_days = excluded.lead_time_days,
-      updated_at_utc = CURRENT_TIMESTAMP`,
-    [
-      id,
-      input.slug,
-      input.name,
-      input.shortDescription,
-      input.longDescription,
-      input.priceCents,
-      input.status,
-      input.leadTimeDays,
-    ],
-  );
+  try {
+    await dbRun(
+      `INSERT INTO dishes (
+        id,
+        slug,
+        name,
+        name_vi,
+        short_description,
+        short_description_vi,
+        long_description,
+        long_description_vi,
+        price_cents,
+        currency,
+        status,
+        lead_time_days,
+        is_featured_week,
+        created_at_utc,
+        updated_at_utc
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        slug = excluded.slug,
+        name = excluded.name,
+        name_vi = excluded.name_vi,
+        short_description = excluded.short_description,
+        short_description_vi = excluded.short_description_vi,
+        long_description = excluded.long_description,
+        long_description_vi = excluded.long_description_vi,
+        price_cents = excluded.price_cents,
+        status = excluded.status,
+        lead_time_days = excluded.lead_time_days,
+        updated_at_utc = CURRENT_TIMESTAMP`,
+      [
+        id,
+        input.slug,
+        input.name,
+        input.nameVi?.trim() || null,
+        input.shortDescription,
+        input.shortDescriptionVi?.trim() || null,
+        input.longDescription,
+        input.longDescriptionVi?.trim() || null,
+        input.priceCents,
+        input.status,
+        input.leadTimeDays,
+      ],
+    );
+  } catch {
+    await dbRun(
+      `INSERT INTO dishes (
+        id,
+        slug,
+        name,
+        short_description,
+        long_description,
+        price_cents,
+        currency,
+        status,
+        lead_time_days,
+        is_featured_week,
+        created_at_utc,
+        updated_at_utc
+      ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        slug = excluded.slug,
+        name = excluded.name,
+        short_description = excluded.short_description,
+        long_description = excluded.long_description,
+        price_cents = excluded.price_cents,
+        status = excluded.status,
+        lead_time_days = excluded.lead_time_days,
+        updated_at_utc = CURRENT_TIMESTAMP`,
+      [
+        id,
+        input.slug,
+        input.name,
+        input.shortDescription,
+        input.longDescription,
+        input.priceCents,
+        input.status,
+        input.leadTimeDays,
+      ],
+    );
+  }
 
   if (input.ingredients) {
     await dbRun(`DELETE FROM ingredients WHERE dish_id = ?`, [id]);
@@ -394,8 +503,8 @@ export async function mapDishesBySlug(): Promise<Map<string, Dish>> {
   return new Map(source.map((dish) => [dish.slug, dish]));
 }
 
-export async function getFeaturedDishes(limit = 3): Promise<Dish[]> {
-  const all = await listLiveDishes();
+export async function getFeaturedDishes(limit = 3, locale?: Locale): Promise<Dish[]> {
+  const all = await listLiveDishes(undefined, locale);
   const featured = all.filter((dish) => dish.isFeaturedWeek);
   if (featured.length > 0) {
     return featured.slice(0, limit);

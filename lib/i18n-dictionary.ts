@@ -96,7 +96,9 @@ export interface SiteMessages {
     state: string;
     zip: string;
     slot: string;
+    fulfillmentDate: string;
     slotPlaceholder: string;
+    noSlotsForDate: string;
     paymentNotesTitle: string;
     paymentMethod: string;
     cash: string;
@@ -268,7 +270,9 @@ const EN_MESSAGES: SiteMessages = {
     state: "State",
     zip: "ZIP",
     slot: "Fulfillment slot",
+    fulfillmentDate: "Fulfillment date",
     slotPlaceholder: "Select a slot",
+    noSlotsForDate: "No available slots for the selected date.",
     paymentNotesTitle: "Payment and Notes",
     paymentMethod: "Payment method",
     cash: "Cash",
@@ -444,7 +448,9 @@ const VI_MESSAGES: SiteMessages = {
     state: "Tiểu bang",
     zip: "Mã ZIP",
     slot: "Khung giờ nhận món",
+    fulfillmentDate: "Ngày nhận món",
     slotPlaceholder: "Chọn khung giờ",
+    noSlotsForDate: "Không có khung giờ phù hợp cho ngày đã chọn.",
     paymentNotesTitle: "Thanh toán và ghi chú",
     paymentMethod: "Phương thức thanh toán",
     cash: "Tiền mặt",

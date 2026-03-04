@@ -14,7 +14,8 @@ interface DishPageProps {
 
 export async function generateMetadata({ params }: DishPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const dish = await getDishBySlug(slug);
+  const { locale } = await getCurrentMessages();
+  const dish = await getDishBySlug(slug, locale);
 
   if (!dish) {
     return {
@@ -41,10 +42,8 @@ export async function generateStaticParams() {
 
 export default async function DishPage({ params }: DishPageProps) {
   const { slug } = await params;
-  const [dish, { locale, messages }] = await Promise.all([
-    getDishBySlug(slug),
-    getCurrentMessages(),
-  ]);
+  const { locale, messages } = await getCurrentMessages();
+  const dish = await getDishBySlug(slug, locale);
 
   if (!dish) {
     notFound();

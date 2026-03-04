@@ -46,11 +46,12 @@ function formatPhoneNumber(value: string): string {
 }
 
 export function CheckoutForm({ locale }: { locale: Locale }) {
-  const { items, subtotalCents, clearCart } = useCart();
+  const { items, subtotalCents, updateQuantity, removeItem, clearCart } = useCart();
   const t = getMessages(locale);
 
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>("delivery");
   const [timeslots, setTimeslots] = useState<Timeslot[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
   const [selectedTimeslot, setSelectedTimeslot] = useState("");
   const [estimate, setEstimate] = useState<EstimateResponse | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -91,26 +92,57 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
       const query = new URLSearchParams({
         fulfillmentType,
         items: JSON.stringify(cartPayload),
+        daysAhead: "60",
       });
 
       const response = await fetch(`/api/timeslots?${query.toString()}`);
       if (!response.ok) {
         setTimeslots([]);
+        setSelectedDate("");
         setSelectedTimeslot("");
         return;
       }
 
       const data = (await response.json()) as { timeslots: Timeslot[] };
       setTimeslots(data.timeslots);
-      setSelectedTimeslot((current) =>
-        data.timeslots.some((slot) => slot.id === current)
-          ? current
-          : (data.timeslots[0]?.id ?? ""),
-      );
     }
 
     void loadTimeslots();
   }, [cartPayload, fulfillmentType]);
+
+  const availableDates = useMemo(() => {
+    const uniqueDates = new Set(timeslots.map((slot) => slot.dateLocal));
+    return [...uniqueDates].sort((a, b) => a.localeCompare(b));
+  }, [timeslots]);
+
+  const earliestDate = availableDates[0] ?? "";
+  const latestDate = availableDates[availableDates.length - 1] ?? "";
+
+  useEffect(() => {
+    if (availableDates.length === 0) {
+      setSelectedDate("");
+      return;
+    }
+
+    setSelectedDate((current) =>
+      current && availableDates.includes(current) ? current : availableDates[0],
+    );
+  }, [availableDates]);
+
+  const filteredTimeslots = useMemo(() => {
+    if (!selectedDate) {
+      return timeslots;
+    }
+    return timeslots.filter((slot) => slot.dateLocal === selectedDate);
+  }, [timeslots, selectedDate]);
+
+  useEffect(() => {
+    setSelectedTimeslot((current) =>
+      filteredTimeslots.some((slot) => slot.id === current)
+        ? current
+        : (filteredTimeslots[0]?.id ?? ""),
+    );
+  }, [filteredTimeslots]);
 
   useEffect(() => {
     async function refreshEstimate() {
@@ -382,19 +414,36 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
         )}
 
         <label>
+          {t.checkout.fulfillmentDate}
+          <input
+            type="date"
+            required
+            min={earliestDate || undefined}
+            max={latestDate || undefined}
+            value={selectedDate}
+            onChange={(event) => setSelectedDate(event.target.value)}
+            disabled={availableDates.length === 0}
+          />
+        </label>
+
+        <label>
           {t.checkout.slot}
           <select
             required
             value={selectedTimeslot}
             onChange={(event) => setSelectedTimeslot(event.target.value)}
+            disabled={filteredTimeslots.length === 0}
           >
             <option value="">{t.checkout.slotPlaceholder}</option>
-            {timeslots.map((slot) => (
+            {filteredTimeslots.map((slot) => (
               <option key={slot.id} value={slot.id}>
                 {slot.dateLocal} {slot.startTimeLocal} ({slot.slotType})
               </option>
             ))}
           </select>
+          {selectedDate && filteredTimeslots.length === 0 ? (
+            <small>{t.checkout.noSlotsForDate}</small>
+          ) : null}
         </label>
       </section>
 
@@ -442,6 +491,45 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                     {t.checkout.quantityLabel}: {item.quantity} · {formatCurrency(item.priceCents)}{" "}
                     {t.common.each}
                   </p>
+                  <div className="checkout-qty-controls">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => updateQuantity(item.dishId, item.quantity - 1)}
+                      aria-label={`${t.cart.decreaseQtyPrefix} ${item.name}`}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={25}
+                      value={item.quantity}
+                      onChange={(event) => {
+                        const next = Number(event.target.value);
+                        if (!Number.isFinite(next)) {
+                          return;
+                        }
+                        updateQuantity(item.dishId, Math.max(1, Math.floor(next)));
+                      }}
+                      aria-label={`${t.checkout.quantityLabel} ${item.name}`}
+                    />
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => updateQuantity(item.dishId, item.quantity + 1)}
+                      aria-label={`${t.cart.increaseQtyPrefix} ${item.name}`}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => removeItem(item.dishId)}
+                    >
+                      {t.cart.remove}
+                    </button>
+                  </div>
                 </div>
                 <strong>{formatCurrency(lineTotalCents)}</strong>
               </li>

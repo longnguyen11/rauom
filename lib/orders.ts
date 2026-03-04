@@ -303,6 +303,7 @@ async function sendOrderEmails(order: {
 export async function listTimeslotsForCart(
   fulfillmentType: "delivery" | "pickup",
   items: Array<{ dishId: string; quantity: number }>,
+  daysAhead = 60,
 ) {
   const dishMap = await mapDishesById(items.map((item) => item.dishId));
   const maxLeadDays = Math.max(
@@ -310,7 +311,7 @@ export async function listTimeslotsForCart(
     ...items.map((item) => dishMap.get(item.dishId)?.leadTimeDays ?? 1),
   );
 
-  return listAvailableTimeslots(fulfillmentType, maxLeadDays);
+  return listAvailableTimeslots(fulfillmentType, maxLeadDays, daysAhead);
 }
 
 export async function createOrder(

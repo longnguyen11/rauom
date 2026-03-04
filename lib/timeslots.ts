@@ -55,8 +55,10 @@ async function countUpcomingTimeslots(): Promise<number> {
 export async function ensureUpcomingTimeslots(days = 14): Promise<void> {
   const db = requireDb();
   const existing = await countUpcomingTimeslots();
+  const slotsPerDay =
+    DEFAULT_SLOT_SPECS.delivery.length + DEFAULT_SLOT_SPECS.pickup.length;
 
-  if (existing >= days * 6) {
+  if (existing >= days * slotsPerDay) {
     return;
   }
 
@@ -126,8 +128,9 @@ export async function ensureUpcomingTimeslots(days = 14): Promise<void> {
 export async function listAvailableTimeslots(
   slotType: FulfillmentType,
   minDishLeadDays: number,
+  daysAhead = 60,
 ): Promise<Timeslot[]> {
-  await ensureUpcomingTimeslots();
+  await ensureUpcomingTimeslots(daysAhead + 7);
 
   const { timezone, minLeadDaysDefault, manualPaymentBufferHours } =
     await getOperationalSettings();
@@ -138,6 +141,9 @@ export async function listAvailableTimeslots(
     manualPaymentBufferHours,
     timezone,
   );
+  const maxInstant = Temporal.Now.zonedDateTimeISO(timezone)
+    .add({ days: daysAhead })
+    .toInstant();
 
   const blackoutDates = await getBlackoutDateSet();
 
@@ -160,9 +166,10 @@ export async function listAvailableTimeslots(
       AND is_open = 1
       AND reserved_count < capacity_limit
       AND start_time_utc >= ?
+      AND start_time_utc <= ?
     ORDER BY start_time_utc ASC
-    LIMIT 60`,
-    [slotType, minInstant.toString()],
+    LIMIT 500`,
+    [slotType, minInstant.toString(), maxInstant.toString()],
   );
 
   return rows

@@ -7,10 +7,10 @@ import { getDietaryTagOptions, getFeaturedDishes, listLiveDishes } from "@/lib/d
 import { getCurrentMessages } from "@/lib/i18n";
 
 export default async function HomePage() {
-  const [{ locale, messages }, dishes, featured, tagOptions] = await Promise.all([
-    getCurrentMessages(),
-    listLiveDishes(),
-    getFeaturedDishes(4),
+  const { locale, messages } = await getCurrentMessages();
+  const [dishes, featured, tagOptions] = await Promise.all([
+    listLiveDishes(undefined, locale),
+    getFeaturedDishes(4, locale),
     getDietaryTagOptions(),
   ]);
 

@@ -5,10 +5,8 @@ import { listArchivedDishes } from "@/lib/dishes";
 import { getCurrentMessages } from "@/lib/i18n";
 
 export default async function ArchivePage() {
-  const [{ messages }, archived] = await Promise.all([
-    getCurrentMessages(),
-    listArchivedDishes(),
-  ]);
+  const { locale, messages } = await getCurrentMessages();
+  const archived = await listArchivedDishes(locale);
 
   return (
     <section className="page-prose">

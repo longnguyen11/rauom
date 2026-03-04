@@ -682,6 +682,23 @@ main {
   color: var(--text-muted);
 }
 
+.checkout-qty-controls {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.checkout-qty-controls input {
+  width: 72px;
+  text-align: center;
+}
+
+.checkout-qty-controls .btn-secondary {
+  padding: 0.38rem 0.65rem;
+}
+
 .estimate-notes {
   margin: 0;
   padding-left: 1rem;

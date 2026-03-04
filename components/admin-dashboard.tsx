@@ -36,8 +36,11 @@ interface DishFormState {
   id?: string;
   slug: string;
   name: string;
+  nameVi: string;
   shortDescription: string;
+  shortDescriptionVi: string;
   longDescription: string;
+  longDescriptionVi: string;
   imageUrl: string;
   imageAltText: string;
   priceCents: number;
@@ -50,8 +53,11 @@ interface DishFormState {
 const EMPTY_DISH_FORM: DishFormState = {
   slug: "",
   name: "",
+  nameVi: "",
   shortDescription: "",
+  shortDescriptionVi: "",
   longDescription: "",
+  longDescriptionVi: "",
   imageUrl: "",
   imageAltText: "",
   priceCents: 0,
@@ -126,8 +132,11 @@ function toDishFormState(dish: Dish): DishFormState {
     id: dish.id,
     slug: dish.slug,
     name: dish.name,
+    nameVi: dish.nameVi ?? "",
     shortDescription: dish.shortDescription,
+    shortDescriptionVi: dish.shortDescriptionVi ?? "",
     longDescription: dish.longDescription,
+    longDescriptionVi: dish.longDescriptionVi ?? "",
     imageUrl: dish.images[0]?.url ?? "",
     imageAltText: dish.images[0]?.altText ?? dish.name,
     priceCents: dish.priceCents,
@@ -166,8 +175,11 @@ export function AdminDashboard({
     id?: string;
     slug: string;
     name: string;
+    nameVi?: string;
     shortDescription: string;
+    shortDescriptionVi?: string;
     longDescription: string;
+    longDescriptionVi?: string;
     imageUrl?: string;
     imageAltText?: string;
     priceCents: number;
@@ -255,8 +267,11 @@ export function AdminDashboard({
       id: dish.id,
       slug: dish.slug,
       name: dish.name,
+      nameVi: dish.nameVi ?? undefined,
       shortDescription: dish.shortDescription,
+      shortDescriptionVi: dish.shortDescriptionVi ?? undefined,
       longDescription: dish.longDescription,
+      longDescriptionVi: dish.longDescriptionVi ?? undefined,
       imageUrl: dish.images[0]?.url,
       imageAltText: dish.images[0]?.altText ?? dish.name,
       priceCents: Math.round(draftValue),
@@ -280,8 +295,11 @@ export function AdminDashboard({
       id: dishForm.id,
       slug: dishForm.slug.trim(),
       name: dishForm.name.trim(),
+      nameVi: dishForm.nameVi.trim() || undefined,
       shortDescription: dishForm.shortDescription.trim(),
+      shortDescriptionVi: dishForm.shortDescriptionVi.trim() || undefined,
       longDescription: dishForm.longDescription.trim(),
+      longDescriptionVi: dishForm.longDescriptionVi.trim() || undefined,
       imageUrl: dishForm.imageUrl.trim() || undefined,
       imageAltText: dishForm.imageAltText.trim() || undefined,
       priceCents: Math.round(Number(dishForm.priceCents)),
@@ -587,6 +605,16 @@ export function AdminDashboard({
             </label>
 
             <label>
+              Name (Vietnamese)
+              <input
+                value={dishForm.nameVi}
+                onChange={(event) =>
+                  setDishForm((current) => ({ ...current, nameVi: event.target.value }))
+                }
+              />
+            </label>
+
+            <label>
               Short description
               <input
                 required
@@ -595,6 +623,19 @@ export function AdminDashboard({
                   setDishForm((current) => ({
                     ...current,
                     shortDescription: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label>
+              Short description (Vietnamese)
+              <input
+                value={dishForm.shortDescriptionVi}
+                onChange={(event) =>
+                  setDishForm((current) => ({
+                    ...current,
+                    shortDescriptionVi: event.target.value,
                   }))
                 }
               />
@@ -610,6 +651,20 @@ export function AdminDashboard({
                   setDishForm((current) => ({
                     ...current,
                     longDescription: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label>
+              Long description (Vietnamese)
+              <textarea
+                rows={3}
+                value={dishForm.longDescriptionVi}
+                onChange={(event) =>
+                  setDishForm((current) => ({
+                    ...current,
+                    longDescriptionVi: event.target.value,
                   }))
                 }
               />
