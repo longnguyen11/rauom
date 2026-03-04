@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { DishBulkDiscountTier } from "@/lib/types";
 
 interface CartItem {
   dishId: string;
@@ -17,6 +18,7 @@ interface CartItem {
   priceCents: number;
   leadTimeDays: number;
   imageUrl: string;
+  bulkDiscountTiers: DishBulkDiscountTier[];
   quantity: number;
 }
 
@@ -34,6 +36,34 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "rauom_cart_v1";
 
+function normalizeBulkDiscountTiers(
+  value: unknown,
+): DishBulkDiscountTier[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      const row = entry as {
+        minQuantity?: unknown;
+        discountPercent?: unknown;
+      };
+      const minQuantity = Number(row.minQuantity);
+      const discountPercent = Number(row.discountPercent);
+      if (!Number.isFinite(minQuantity) || !Number.isFinite(discountPercent)) {
+        return null;
+      }
+
+      return {
+        minQuantity: Math.max(2, Math.floor(minQuantity)),
+        discountPercent: Math.max(1, Math.min(90, Math.floor(discountPercent))),
+      };
+    })
+    .filter((entry): entry is DishBulkDiscountTier => Boolean(entry))
+    .sort((a, b) => a.minQuantity - b.minQuantity);
+}
+
 function readStorage(): CartItem[] {
   if (typeof window === "undefined") {
     return [];
@@ -45,8 +75,46 @@ function readStorage(): CartItem[] {
       return [];
     }
 
-    const parsed = JSON.parse(raw) as CartItem[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw) as Array<{
+      dishId?: unknown;
+      slug?: unknown;
+      name?: unknown;
+      priceCents?: unknown;
+      leadTimeDays?: unknown;
+      imageUrl?: unknown;
+      quantity?: unknown;
+      bulkDiscountTiers?: unknown;
+    }>;
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((row) => {
+        const dishId = String(row.dishId ?? "").trim();
+        const name = String(row.name ?? "").trim();
+        const slug = String(row.slug ?? "").trim();
+        const imageUrl = String(row.imageUrl ?? "").trim();
+        const priceCents = Number(row.priceCents ?? 0);
+        const leadTimeDays = Number(row.leadTimeDays ?? 1);
+        const quantity = Number(row.quantity ?? 1);
+        if (!dishId || !name || !slug || !imageUrl || !Number.isFinite(priceCents)) {
+          return null;
+        }
+
+        return {
+          dishId,
+          slug,
+          name,
+          priceCents: Math.max(0, Math.round(priceCents)),
+          leadTimeDays: Math.max(1, Math.floor(leadTimeDays)),
+          imageUrl,
+          bulkDiscountTiers: normalizeBulkDiscountTiers(row.bulkDiscountTiers),
+          quantity: Math.max(1, Math.min(25, Math.floor(quantity))),
+        } as CartItem;
+      })
+      .filter((row): row is CartItem => Boolean(row));
   } catch {
     return [];
   }
@@ -69,7 +137,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (existing) {
           return current.map((entry) =>
             entry.dishId === item.dishId
-              ? { ...entry, quantity: Math.min(entry.quantity + quantity, 25) }
+              ? {
+                  ...entry,
+                  ...item,
+                  quantity: Math.min(entry.quantity + quantity, 25),
+                }
               : entry,
           );
         }

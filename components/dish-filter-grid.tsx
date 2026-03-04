@@ -15,6 +15,22 @@ interface DishFilterGridProps {
   locale: Locale;
 }
 
+function formatDishBulkDiscountLine(dish: Dish, locale: Locale, fallbackText: string): string {
+  if (dish.bulkDiscountTiers.length === 0) {
+    return fallbackText;
+  }
+
+  return dish.bulkDiscountTiers
+    .slice()
+    .sort((a, b) => a.minQuantity - b.minQuantity)
+    .map((tier) =>
+      locale === "vi"
+        ? `Từ ${tier.minQuantity} phần giảm ${tier.discountPercent}%`
+        : `${tier.minQuantity}+ servings save ${tier.discountPercent}%`,
+    )
+    .join(" · ");
+}
+
 export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridProps) {
   const [activeTag, setActiveTag] = useState<string>("all");
   const t = getMessages(locale);
@@ -91,6 +107,11 @@ export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridPro
                   {t.dishGrid.minimumLeadTime}: {dish.leadTimeDays} {t.common.daySuffix}
                 </p>
 
+                <p className="bulk-discount-line">
+                  {t.dishGrid.bulkDiscountLabel}:{" "}
+                  {formatDishBulkDiscountLine(dish, locale, t.dishGrid.bulkDiscountNone)}
+                </p>
+
                 <ul className="tag-row" aria-label="Dietary tags">
                   {dish.dietaryTags.map((tag) => (
                     <li key={`${dish.id}-${tag.code}`} className="tag-pill">
@@ -114,6 +135,7 @@ export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridPro
                       priceCents: dish.priceCents,
                       leadTimeDays: dish.leadTimeDays,
                       imageUrl: image?.url ?? "",
+                      bulkDiscountTiers: dish.bulkDiscountTiers,
                     }}
                   />
                 </div>

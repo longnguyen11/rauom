@@ -12,6 +12,8 @@ interface DishRow {
   short_description_vi: string | null;
   long_description: string;
   long_description_vi: string | null;
+  category: Dish["category"] | null;
+  bulk_discount_tiers_json: string | null;
   price_cents: number;
   currency: string;
   status: Dish["status"];
@@ -51,6 +53,46 @@ interface NutritionRow {
   fat_g: number | null;
   sodium_mg: number | null;
   notes: string | null;
+}
+
+function normalizeDishBulkDiscountTiers(
+  tiers: Dish["bulkDiscountTiers"] | undefined,
+): Dish["bulkDiscountTiers"] {
+  if (!tiers || tiers.length === 0) {
+    return [];
+  }
+
+  return tiers
+    .map((tier) => ({
+      minQuantity: Math.max(2, Math.floor(tier.minQuantity)),
+      discountPercent: Math.max(1, Math.min(90, Math.floor(tier.discountPercent))),
+    }))
+    .filter((tier) => Number.isFinite(tier.minQuantity) && Number.isFinite(tier.discountPercent))
+    .sort((a, b) => a.minQuantity - b.minQuantity);
+}
+
+function parseBulkDiscountTiers(
+  value: string | null | undefined,
+): Dish["bulkDiscountTiers"] {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as Array<{
+      minQuantity?: number;
+      discountPercent?: number;
+    }>;
+
+    return normalizeDishBulkDiscountTiers(
+      parsed.map((tier) => ({
+        minQuantity: Number(tier.minQuantity ?? 0),
+        discountPercent: Number(tier.discountPercent ?? 0),
+      })),
+    );
+  } catch {
+    return [];
+  }
 }
 
 function mapDishRows(
@@ -98,6 +140,8 @@ function mapDishRows(
       shortDescriptionVi: row.short_description_vi,
       longDescription: row.long_description,
       longDescriptionVi: row.long_description_vi,
+      category: row.category ?? "main",
+      bulkDiscountTiers: parseBulkDiscountTiers(row.bulk_discount_tiers_json),
       priceCents: row.price_cents,
       currency: row.currency,
       status: row.status,
@@ -164,6 +208,8 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
         short_description_vi,
         long_description,
         long_description_vi,
+        category,
+        bulk_discount_tiers_json,
         price_cents,
         currency,
         status,
@@ -179,30 +225,61 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
       statuses,
     );
   } catch {
-    dishRows = await dbAll<DishRow>(
-      `SELECT
-        id,
-        slug,
-        name,
-        NULL AS name_vi,
-        short_description,
-        NULL AS short_description_vi,
-        long_description,
-        NULL AS long_description_vi,
-        price_cents,
-        currency,
-        status,
-        lead_time_days,
-        is_featured_week,
-        available_from_utc,
-        available_to_utc,
-        created_at_utc,
-        updated_at_utc
-      FROM dishes
-      WHERE status IN (${placeholders})
-      ORDER BY is_featured_week DESC, updated_at_utc DESC`,
-      statuses,
-    );
+    try {
+      dishRows = await dbAll<DishRow>(
+        `SELECT
+          id,
+          slug,
+          name,
+          name_vi,
+          short_description,
+          short_description_vi,
+          long_description,
+          long_description_vi,
+          'main' AS category,
+          '[]' AS bulk_discount_tiers_json,
+          price_cents,
+          currency,
+          status,
+          lead_time_days,
+          is_featured_week,
+          available_from_utc,
+          available_to_utc,
+          created_at_utc,
+          updated_at_utc
+        FROM dishes
+        WHERE status IN (${placeholders})
+        ORDER BY is_featured_week DESC, updated_at_utc DESC`,
+        statuses,
+      );
+    } catch {
+      dishRows = await dbAll<DishRow>(
+        `SELECT
+          id,
+          slug,
+          name,
+          NULL AS name_vi,
+          short_description,
+          NULL AS short_description_vi,
+          long_description,
+          NULL AS long_description_vi,
+          'main' AS category,
+          '[]' AS bulk_discount_tiers_json,
+          price_cents,
+          currency,
+          status,
+          lead_time_days,
+          is_featured_week,
+          available_from_utc,
+          available_to_utc,
+          created_at_utc,
+          updated_at_utc
+        FROM dishes
+        WHERE status IN (${placeholders})
+        ORDER BY is_featured_week DESC, updated_at_utc DESC`,
+        statuses,
+      );
+    }
   }
 
   if (dishRows.length === 0) {
@@ -288,6 +365,7 @@ interface UpsertDishInput {
   shortDescriptionVi?: string;
   longDescription: string;
   longDescriptionVi?: string;
+  bulkDiscountTiers?: Dish["bulkDiscountTiers"];
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
@@ -301,6 +379,9 @@ interface UpsertDishInput {
 
 export async function upsertDish(input: UpsertDishInput): Promise<void> {
   const id = input.id ?? `dish_${crypto.randomUUID()}`;
+  const bulkDiscountTiersJson = JSON.stringify(
+    normalizeDishBulkDiscountTiers(input.bulkDiscountTiers),
+  );
 
   try {
     await dbRun(
@@ -313,6 +394,7 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         short_description_vi,
         long_description,
         long_description_vi,
+        bulk_discount_tiers_json,
         price_cents,
         currency,
         status,
@@ -320,7 +402,7 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         is_featured_week,
         created_at_utc,
         updated_at_utc
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
         slug = excluded.slug,
         name = excluded.name,
@@ -329,6 +411,7 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         short_description_vi = excluded.short_description_vi,
         long_description = excluded.long_description,
         long_description_vi = excluded.long_description_vi,
+        bulk_discount_tiers_json = excluded.bulk_discount_tiers_json,
         price_cents = excluded.price_cents,
         status = excluded.status,
         lead_time_days = excluded.lead_time_days,
@@ -342,47 +425,95 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         input.shortDescriptionVi?.trim() || null,
         input.longDescription,
         input.longDescriptionVi?.trim() || null,
+        bulkDiscountTiersJson,
         input.priceCents,
         input.status,
         input.leadTimeDays,
       ],
     );
   } catch {
-    await dbRun(
-      `INSERT INTO dishes (
-        id,
-        slug,
-        name,
-        short_description,
-        long_description,
-        price_cents,
-        currency,
-        status,
-        lead_time_days,
-        is_featured_week,
-        created_at_utc,
-        updated_at_utc
-      ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET
-        slug = excluded.slug,
-        name = excluded.name,
-        short_description = excluded.short_description,
-        long_description = excluded.long_description,
-        price_cents = excluded.price_cents,
-        status = excluded.status,
-        lead_time_days = excluded.lead_time_days,
-        updated_at_utc = CURRENT_TIMESTAMP`,
-      [
-        id,
-        input.slug,
-        input.name,
-        input.shortDescription,
-        input.longDescription,
-        input.priceCents,
-        input.status,
-        input.leadTimeDays,
-      ],
-    );
+    try {
+      await dbRun(
+        `INSERT INTO dishes (
+          id,
+          slug,
+          name,
+          name_vi,
+          short_description,
+          short_description_vi,
+          long_description,
+          long_description_vi,
+          price_cents,
+          currency,
+          status,
+          lead_time_days,
+          is_featured_week,
+          created_at_utc,
+          updated_at_utc
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(id) DO UPDATE SET
+          slug = excluded.slug,
+          name = excluded.name,
+          name_vi = excluded.name_vi,
+          short_description = excluded.short_description,
+          short_description_vi = excluded.short_description_vi,
+          long_description = excluded.long_description,
+          long_description_vi = excluded.long_description_vi,
+          price_cents = excluded.price_cents,
+          status = excluded.status,
+          lead_time_days = excluded.lead_time_days,
+          updated_at_utc = CURRENT_TIMESTAMP`,
+        [
+          id,
+          input.slug,
+          input.name,
+          input.nameVi?.trim() || null,
+          input.shortDescription,
+          input.shortDescriptionVi?.trim() || null,
+          input.longDescription,
+          input.longDescriptionVi?.trim() || null,
+          input.priceCents,
+          input.status,
+          input.leadTimeDays,
+        ],
+      );
+    } catch {
+      await dbRun(
+        `INSERT INTO dishes (
+          id,
+          slug,
+          name,
+          short_description,
+          long_description,
+          price_cents,
+          currency,
+          status,
+          lead_time_days,
+          is_featured_week,
+          created_at_utc,
+          updated_at_utc
+        ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(id) DO UPDATE SET
+          slug = excluded.slug,
+          name = excluded.name,
+          short_description = excluded.short_description,
+          long_description = excluded.long_description,
+          price_cents = excluded.price_cents,
+          status = excluded.status,
+          lead_time_days = excluded.lead_time_days,
+          updated_at_utc = CURRENT_TIMESTAMP`,
+        [
+          id,
+          input.slug,
+          input.name,
+          input.shortDescription,
+          input.longDescription,
+          input.priceCents,
+          input.status,
+          input.leadTimeDays,
+        ],
+      );
+    }
   }
 
   if (input.ingredients) {

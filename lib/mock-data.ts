@@ -9,6 +9,11 @@ export const MOCK_DISHES: Dish[] = [
       "Classic Vietnamese beef noodle soup with aromatic broth and herbs.",
     longDescription:
       "Slow-simmered beef bone broth with rice noodles, sliced beef, basil, rau om, and lime.",
+    category: "main",
+    bulkDiscountTiers: [
+      { minQuantity: 10, discountPercent: 5 },
+      { minQuantity: 25, discountPercent: 12 },
+    ],
     priceCents: 1850,
     currency: "USD",
     status: "live",
@@ -49,6 +54,11 @@ export const MOCK_DISHES: Dish[] = [
       "Vegetarian pho with clear mushroom broth, rice noodles, and fresh herbs.",
     longDescription:
       "A light and aromatic plant-based pho with mushrooms, bok choy, scallions, rau om, and lime.",
+    category: "main",
+    bulkDiscountTiers: [
+      { minQuantity: 8, discountPercent: 4 },
+      { minQuantity: 16, discountPercent: 9 },
+    ],
     priceCents: 1650,
     currency: "USD",
     status: "live",
@@ -93,6 +103,10 @@ export const MOCK_DISHES: Dish[] = [
       "Fresh spring rolls with herbs, vermicelli, and house dipping sauce.",
     longDescription:
       "Rice paper rolls with herbs, lettuce, and vermicelli, served chilled with peanut-hoisin dip.",
+    category: "side",
+    bulkDiscountTiers: [
+      { minQuantity: 20, discountPercent: 8 },
+    ],
     priceCents: 1290,
     currency: "USD",
     status: "live",
@@ -136,6 +150,12 @@ export const MOCK_DISHES: Dish[] = [
       "Vietnamese lemongrass beef stew with carrots and toasted baguette.",
     longDescription:
       "Rich, slow-braised beef stew with lemongrass, star anise, tomato, and herb garnish.",
+    category: "main",
+    bulkDiscountTiers: [
+      { minQuantity: 6, discountPercent: 3 },
+      { minQuantity: 12, discountPercent: 7 },
+      { minQuantity: 24, discountPercent: 12 },
+    ],
     priceCents: 1950,
     currency: "USD",
     status: "live",
@@ -179,6 +199,10 @@ export const MOCK_DISHES: Dish[] = [
       "Crispy turmeric crepe with bean sprouts, herbs, and dipping sauce.",
     longDescription:
       "Golden rice-flour crepe folded over savory filling, served with lettuce and herbs for wrapping.",
+    category: "main",
+    bulkDiscountTiers: [
+      { minQuantity: 10, discountPercent: 6 },
+    ],
     priceCents: 1690,
     currency: "USD",
     status: "live",
@@ -221,6 +245,8 @@ export const MOCK_DISHES: Dish[] = [
     shortDescription: "Tomato crab noodle soup from a previous weekly menu.",
     longDescription:
       "Classic northern tomato-and-crab style broth served in a limited run.",
+    category: "main",
+    bulkDiscountTiers: [],
     priceCents: 1790,
     currency: "USD",
     status: "archived",

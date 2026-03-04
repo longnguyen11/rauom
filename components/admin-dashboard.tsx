@@ -46,6 +46,7 @@ interface DishFormState {
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
+  bulkDiscountTiersCsv: string;
   ingredientsCsv: string;
   allergensCsv: string;
 }
@@ -63,6 +64,7 @@ const EMPTY_DISH_FORM: DishFormState = {
   priceCents: 0,
   leadTimeDays: 1,
   status: "draft",
+  bulkDiscountTiersCsv: "",
   ingredientsCsv: "",
   allergensCsv: "",
 };
@@ -94,6 +96,47 @@ function parseCsvList(value: string): string[] {
     .split(/[\n,]/)
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function parseBulkDiscountTiersInput(
+  value: string,
+): Array<{ minQuantity: number; discountPercent: number }> {
+  const rows = value
+    .split("\n")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  const parsed: Array<{ minQuantity: number; discountPercent: number }> = [];
+  for (const row of rows) {
+    const [quantityPart, percentPart] = row.split(":").map((part) => part?.trim());
+    const minQuantity = Number(quantityPart);
+    const discountPercent = Number(percentPart);
+
+    if (!Number.isFinite(minQuantity) || !Number.isFinite(discountPercent)) {
+      continue;
+    }
+
+    parsed.push({
+      minQuantity: Math.max(2, Math.floor(minQuantity)),
+      discountPercent: Math.max(1, Math.min(90, Math.floor(discountPercent))),
+    });
+  }
+
+  return parsed.sort((a, b) => a.minQuantity - b.minQuantity);
+}
+
+function formatBulkDiscountTiersInput(
+  tiers: Array<{ minQuantity: number; discountPercent: number }>,
+): string {
+  if (tiers.length === 0) {
+    return "";
+  }
+
+  return tiers
+    .slice()
+    .sort((a, b) => a.minQuantity - b.minQuantity)
+    .map((tier) => `${tier.minQuantity}:${tier.discountPercent}`)
+    .join("\n");
 }
 
 function buildIngredients(
@@ -142,6 +185,7 @@ function toDishFormState(dish: Dish): DishFormState {
     priceCents: dish.priceCents,
     leadTimeDays: dish.leadTimeDays as 1 | 2 | 3,
     status: dish.status,
+    bulkDiscountTiersCsv: formatBulkDiscountTiersInput(dish.bulkDiscountTiers),
     ingredientsCsv: ingredients,
     allergensCsv: allergens,
   };
@@ -182,6 +226,7 @@ export function AdminDashboard({
     longDescriptionVi?: string;
     imageUrl?: string;
     imageAltText?: string;
+    bulkDiscountTiers: Array<{ minQuantity: number; discountPercent: number }>;
     priceCents: number;
     leadTimeDays: 1 | 2 | 3;
     status: Dish["status"];
@@ -274,6 +319,7 @@ export function AdminDashboard({
       longDescriptionVi: dish.longDescriptionVi ?? undefined,
       imageUrl: dish.images[0]?.url,
       imageAltText: dish.images[0]?.altText ?? dish.name,
+      bulkDiscountTiers: dish.bulkDiscountTiers,
       priceCents: Math.round(draftValue),
       leadTimeDays: dish.leadTimeDays as 1 | 2 | 3,
       status: dish.status,
@@ -302,6 +348,7 @@ export function AdminDashboard({
       longDescriptionVi: dishForm.longDescriptionVi.trim() || undefined,
       imageUrl: dishForm.imageUrl.trim() || undefined,
       imageAltText: dishForm.imageAltText.trim() || undefined,
+      bulkDiscountTiers: parseBulkDiscountTiersInput(dishForm.bulkDiscountTiersCsv),
       priceCents: Math.round(Number(dishForm.priceCents)),
       leadTimeDays: dishForm.leadTimeDays,
       status: dishForm.status,
@@ -517,6 +564,14 @@ export function AdminDashboard({
                 <div>{dish.slug}</div>
                 <div>Lead time: {dish.leadTimeDays} day(s)</div>
                 <div>Current price: {formatCurrency(dish.priceCents)}</div>
+                <div>
+                  Bulk discount:{" "}
+                  {dish.bulkDiscountTiers.length > 0
+                    ? dish.bulkDiscountTiers
+                        .map((tier) => `${tier.minQuantity}+ => ${tier.discountPercent}%`)
+                        .join(", ")
+                    : "none"}
+                </div>
 
                 <form
                   className="inline-form"
@@ -720,6 +775,21 @@ export function AdminDashboard({
                   setDishForm((current) => ({
                     ...current,
                     allergensCsv: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label>
+              Bulk discount tiers for this dish (one per line as quantity:percent, for example 10:5)
+              <textarea
+                rows={3}
+                placeholder={"10:5\n20:10"}
+                value={dishForm.bulkDiscountTiersCsv}
+                onChange={(event) =>
+                  setDishForm((current) => ({
+                    ...current,
+                    bulkDiscountTiersCsv: event.target.value,
                   }))
                 }
               />

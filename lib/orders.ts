@@ -26,6 +26,7 @@ import type {
   CheckoutEstimateInput,
   CheckoutSubmitInput,
   DeliveryAddress,
+  DishBulkDiscountTier,
   OrderEstimate,
   OrderSummary,
   OrderStatus,
@@ -86,6 +87,33 @@ function createOrderNumber(): string {
   const now = new Date();
   const date = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
   return `RO-${date}-${nanoid(6).toUpperCase()}`;
+}
+
+function formatUsd(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function getBulkDiscountPercentForQuantity(
+  quantity: number,
+  tiers: DishBulkDiscountTier[],
+): number {
+  let discountPercent = 0;
+  for (const tier of tiers) {
+    if (quantity >= tier.minQuantity) {
+      discountPercent = Math.max(discountPercent, tier.discountPercent);
+    }
+  }
+  return discountPercent;
+}
+
+function getBulkDiscountRuleLabel(tiers: DishBulkDiscountTier[]): string {
+  if (tiers.length === 0) {
+    return "No bulk discount configured";
+  }
+
+  return tiers.map((tier) => {
+    return `${tier.minQuantity}+ servings: ${tier.discountPercent}% off`;
+  }).join("; ");
 }
 
 function maskEmail(email: string): string {
@@ -152,7 +180,10 @@ async function computeEstimate(
   }
 
   let subtotalCents = 0;
+  let totalItemQuantity = 0;
+  let bulkDiscountCents = 0;
   let maxDishLeadTimeDays = 1;
+  const bulkPolicyLines = new Set<string>();
 
   for (const item of parsed.items) {
     const dish = dishMap.get(item.dishId);
@@ -160,9 +191,25 @@ async function computeEstimate(
       throw new Error("Some dishes are not currently live.");
     }
 
-    subtotalCents += dish.priceCents * item.quantity;
+    const lineSubtotalCents = dish.priceCents * item.quantity;
+    const lineDiscountPercent = getBulkDiscountPercentForQuantity(
+      item.quantity,
+      dish.bulkDiscountTiers,
+    );
+    const lineDiscountCents =
+      lineDiscountPercent > 0
+        ? Math.round((lineSubtotalCents * lineDiscountPercent) / 100)
+        : 0;
+
+    subtotalCents += lineSubtotalCents;
+    totalItemQuantity += item.quantity;
+    bulkDiscountCents += lineDiscountCents;
     maxDishLeadTimeDays = Math.max(maxDishLeadTimeDays, dish.leadTimeDays);
+
+    bulkPolicyLines.add(`${dish.name}: ${getBulkDiscountRuleLabel(dish.bulkDiscountTiers)}`);
   }
+
+  const subtotalAfterDiscountCents = Math.max(0, subtotalCents - bulkDiscountCents);
 
   const operational = await getOperationalSettings();
   const leadTimeDays = Math.max(maxDishLeadTimeDays, operational.minLeadDaysDefault);
@@ -190,7 +237,7 @@ async function computeEstimate(
     if (
       pricingRule.minimumOrderEnabled &&
       pricingRule.minimumOrderAmountDeliveryCents !== null &&
-      subtotalCents < pricingRule.minimumOrderAmountDeliveryCents
+      subtotalAfterDiscountCents < pricingRule.minimumOrderAmountDeliveryCents
     ) {
       throw new Error(
         `Delivery minimum is $${(pricingRule.minimumOrderAmountDeliveryCents / 100).toFixed(2)}.`,
@@ -199,7 +246,7 @@ async function computeEstimate(
   } else if (
     pricingRule.minimumOrderEnabled &&
     pricingRule.minimumOrderAmountPickupCents !== null &&
-    subtotalCents < pricingRule.minimumOrderAmountPickupCents
+    subtotalAfterDiscountCents < pricingRule.minimumOrderAmountPickupCents
   ) {
     throw new Error(
       `Pickup minimum is $${(pricingRule.minimumOrderAmountPickupCents / 100).toFixed(2)}.`,
@@ -207,9 +254,9 @@ async function computeEstimate(
   }
 
   const taxRateBps = await getActiveTaxRateBps();
-  const taxAmountCents = calculateTaxAmountCents(subtotalCents, taxRateBps);
+  const taxAmountCents = calculateTaxAmountCents(subtotalAfterDiscountCents, taxRateBps);
   const totalCents = calculateTotalCents(
-    subtotalCents,
+    subtotalAfterDiscountCents,
     deliveryFeeCents,
     taxAmountCents,
   );
@@ -217,11 +264,19 @@ async function computeEstimate(
   const notes = [
     `Lead time requirement: ${leadTimeDays} day(s) based on selected dishes.`,
     `Manual payment confirmation must happen at least ${operational.manualPaymentBufferHours} hours before fulfillment.`,
+    ...[...bulkPolicyLines].map((line) => `Bulk policy - ${line}`),
   ];
+
+  if (bulkDiscountCents > 0) {
+    notes.unshift(`Bulk discount applied: -${formatUsd(bulkDiscountCents)}.`);
+  }
 
   return {
     currency: "USD",
+    totalItemQuantity,
     subtotalCents,
+    bulkDiscountCents,
+    subtotalAfterDiscountCents,
     deliveryFeeCents,
     taxRateBps,
     taxAmountCents,
@@ -243,7 +298,10 @@ export async function estimateOrder(
 
   return {
     currency: estimate.currency,
+    totalItemQuantity: estimate.totalItemQuantity,
     subtotalCents: estimate.subtotalCents,
+    bulkDiscountCents: estimate.bulkDiscountCents,
+    subtotalAfterDiscountCents: estimate.subtotalAfterDiscountCents,
     deliveryFeeCents: estimate.deliveryFeeCents,
     taxRateBps: estimate.taxRateBps,
     taxAmountCents: estimate.taxAmountCents,
@@ -452,7 +510,7 @@ export async function createOrder(
         estimate.quote?.destinationLat ?? null,
         estimate.quote?.destinationLng ?? null,
         estimate.quote?.distanceMiles ?? null,
-        estimate.subtotalCents,
+        estimate.subtotalAfterDiscountCents,
         estimate.taxRateBps,
         estimate.taxAmountCents,
         estimate.deliveryFeeCents,

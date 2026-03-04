@@ -13,6 +13,15 @@ const createSchema = z.object({
   shortDescriptionVi: z.string().min(8).max(220).optional(),
   longDescription: z.string().min(8).max(1200),
   longDescriptionVi: z.string().min(8).max(1200).optional(),
+  bulkDiscountTiers: z
+    .array(
+      z.object({
+        minQuantity: z.number().int().min(2).max(500),
+        discountPercent: z.number().int().min(1).max(90),
+      }),
+    )
+    .max(8)
+    .optional(),
   priceCents: z.number().int().min(100).max(50000),
   leadTimeDays: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   status: z.enum(["draft", "scheduled", "live", "archived", "sold_out"]),

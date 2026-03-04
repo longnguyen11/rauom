@@ -52,6 +52,8 @@ export interface SiteMessages {
     filterAria: string;
     all: string;
     minimumLeadTime: string;
+    bulkDiscountLabel: string;
+    bulkDiscountNone: string;
   };
   home: {
     trustTitle: string;
@@ -110,6 +112,8 @@ export interface SiteMessages {
     itemsTitle: string;
     quantityLabel: string;
     cartSubtotal: string;
+    bulkDiscount: string;
+    subtotalAfterDiscount: string;
     updatingEstimate: string;
     deliveryFee: string;
     distance: string;
@@ -224,6 +228,8 @@ const EN_MESSAGES: SiteMessages = {
     filterAria: "Filter dishes by dietary tags",
     all: "All",
     minimumLeadTime: "Minimum lead time",
+    bulkDiscountLabel: "Bulk discount",
+    bulkDiscountNone: "No bulk discount",
   },
   home: {
     trustTitle: "Trust and Freshness",
@@ -284,6 +290,8 @@ const EN_MESSAGES: SiteMessages = {
     itemsTitle: "Order items",
     quantityLabel: "Qty",
     cartSubtotal: "Cart subtotal",
+    bulkDiscount: "Bulk discount",
+    subtotalAfterDiscount: "Subtotal after discount",
     updatingEstimate: "Updating estimate...",
     deliveryFee: "Delivery fee",
     distance: "Distance",
@@ -402,6 +410,8 @@ const VI_MESSAGES: SiteMessages = {
     filterAria: "Lọc món theo nhãn chế độ ăn",
     all: "Tất cả",
     minimumLeadTime: "Thời gian đặt trước tối thiểu",
+    bulkDiscountLabel: "Ưu đãi số lượng",
+    bulkDiscountNone: "Chưa có ưu đãi số lượng",
   },
   home: {
     trustTitle: "Cam kết chất lượng",
@@ -462,6 +472,8 @@ const VI_MESSAGES: SiteMessages = {
     itemsTitle: "Món trong đơn",
     quantityLabel: "SL",
     cartSubtotal: "Tạm tính giỏ hàng",
+    bulkDiscount: "Giảm giá số lượng",
+    subtotalAfterDiscount: "Tạm tính sau giảm giá",
     updatingEstimate: "Đang cập nhật tạm tính...",
     deliveryFee: "Phí giao hàng",
     distance: "Khoảng cách",

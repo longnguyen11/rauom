@@ -1,4 +1,5 @@
-﻿export type DishStatus = "draft" | "scheduled" | "live" | "archived" | "sold_out";
+export type DishStatus = "draft" | "scheduled" | "live" | "archived" | "sold_out";
+export type DishCategory = "main" | "side" | "dessert";
 
 export type FulfillmentType = "delivery" | "pickup";
 
@@ -30,6 +31,11 @@ export interface DishNutrition {
   notes: string | null;
 }
 
+export interface DishBulkDiscountTier {
+  minQuantity: number;
+  discountPercent: number;
+}
+
 export interface Dish {
   id: string;
   slug: string;
@@ -39,6 +45,8 @@ export interface Dish {
   shortDescriptionVi?: string | null;
   longDescription: string;
   longDescriptionVi?: string | null;
+  category: DishCategory;
+  bulkDiscountTiers: DishBulkDiscountTier[];
   priceCents: number;
   currency: string;
   status: DishStatus;
@@ -90,7 +98,7 @@ export interface CheckoutEstimateInput {
 
 export interface CheckoutSubmitInput extends CheckoutEstimateInput {
   customerName: string;
-  email: string;
+  email?: string;
   phone: string;
   notes?: string;
   paymentMethod: PaymentMethod;
@@ -110,7 +118,10 @@ export interface DeliveryQuote {
 
 export interface OrderEstimate {
   currency: "USD";
+  totalItemQuantity: number;
   subtotalCents: number;
+  bulkDiscountCents: number;
+  subtotalAfterDiscountCents: number;
   deliveryFeeCents: number;
   taxRateBps: number;
   taxAmountCents: number;

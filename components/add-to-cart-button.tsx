@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useCart } from "@/components/cart-context";
 import { getMessages, type Locale } from "@/lib/i18n-dictionary";
+import type { DishBulkDiscountTier } from "@/lib/types";
 
 interface AddToCartButtonProps {
   dish: {
@@ -13,6 +14,7 @@ interface AddToCartButtonProps {
     priceCents: number;
     leadTimeDays: number;
     imageUrl: string;
+    bulkDiscountTiers: DishBulkDiscountTier[];
   };
   locale: Locale;
   className?: string;
@@ -39,6 +41,7 @@ export function AddToCartButton({ dish, locale, className }: AddToCartButtonProp
             priceCents: dish.priceCents,
             leadTimeDays: dish.leadTimeDays,
             imageUrl: dish.imageUrl,
+            bulkDiscountTiers: dish.bulkDiscountTiers,
           },
           1,
         );

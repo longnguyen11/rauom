@@ -124,6 +124,7 @@ export default async function DishPage({ params }: DishPageProps) {
               priceCents: dish.priceCents,
               leadTimeDays: dish.leadTimeDays,
               imageUrl: image,
+              bulkDiscountTiers: dish.bulkDiscountTiers,
             }}
           />
         </div>

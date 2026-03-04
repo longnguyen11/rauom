@@ -9,7 +9,10 @@ import { getMessages, type Locale } from "@/lib/i18n-dictionary";
 import type { FulfillmentType, Timeslot } from "@/lib/types";
 
 interface EstimateResponse {
+  totalItemQuantity: number;
   subtotalCents: number;
+  bulkDiscountCents: number;
+  subtotalAfterDiscountCents: number;
   deliveryFeeCents: number;
   taxAmountCents: number;
   totalCents: number;
@@ -544,6 +547,18 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           <p>{t.checkout.updatingEstimate}</p>
         ) : estimate ? (
           <>
+            {estimate.bulkDiscountCents > 0 && (
+              <p>
+                {t.checkout.bulkDiscount}:{" "}
+                <strong>-{formatCurrency(estimate.bulkDiscountCents)}</strong>
+              </p>
+            )}
+            {estimate.bulkDiscountCents > 0 && (
+              <p>
+                {t.checkout.subtotalAfterDiscount}:{" "}
+                <strong>{formatCurrency(estimate.subtotalAfterDiscountCents)}</strong>
+              </p>
+            )}
             <p>
               {t.checkout.deliveryFee}: <strong>{formatCurrency(estimate.deliveryFeeCents)}</strong>
             </p>
