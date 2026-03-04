@@ -7,9 +7,28 @@ import { AddToCartButton } from "@/components/add-to-cart-button";
 import { getDishBySlug, mapDishesBySlug } from "@/lib/dishes";
 import { formatCurrency } from "@/lib/format";
 import { getCurrentMessages } from "@/lib/i18n";
+import type { DishBulkDiscountTier } from "@/lib/types";
 
 interface DishPageProps {
   params: Promise<{ slug: string }>;
+}
+
+function formatDishBulkDiscountLine(
+  tiers: DishBulkDiscountTier[],
+  locale: "en" | "vi",
+): string[] {
+  if (tiers.length === 0) {
+    return [];
+  }
+
+  return tiers
+    .slice()
+    .sort((a, b) => a.minQuantity - b.minQuantity)
+    .map((tier) =>
+      locale === "vi"
+        ? `Từ ${tier.minQuantity} phần giảm ${tier.discountPercent}%`
+        : `${tier.minQuantity}+ servings save ${tier.discountPercent}%`,
+    );
 }
 
 export async function generateMetadata({ params }: DishPageProps): Promise<Metadata> {
@@ -102,6 +121,18 @@ export default async function DishPage({ params }: DishPageProps) {
           <p>
             <strong>{messages.dishPage.leadTime}:</strong> {dish.leadTimeDays} {messages.common.daySuffix}
           </p>
+          <div className="dish-bulk-discount-line">
+            <strong>{messages.dishGrid.bulkDiscountLabel}:</strong>
+            {dish.bulkDiscountTiers.length > 0 ? (
+              <ul className="dish-bulk-discount-list">
+                {formatDishBulkDiscountLine(dish.bulkDiscountTiers, locale).map((line) => (
+                  <li key={`${dish.id}-${line}`}>{line}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>{messages.dishGrid.bulkDiscountNone}</p>
+            )}
+          </div>
 
           <div>
             <h2>{messages.dishPage.dietaryTags}</h2>

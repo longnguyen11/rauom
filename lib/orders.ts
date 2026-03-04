@@ -55,7 +55,7 @@ const checkoutEstimateSchema = z.object({
 
 const checkoutSubmitSchema = checkoutEstimateSchema.extend({
   customerName: z.string().min(2).max(120),
-  email: z.email().max(200),
+  email: z.string().trim().max(200).email().optional().or(z.literal("")),
   phone: z
     .string()
     .min(10)
@@ -316,7 +316,7 @@ export async function estimateOrder(
 async function sendOrderEmails(order: {
   orderNumber: string;
   customerName: string;
-  email: string;
+  email?: string;
   totalCents: number;
   fulfillmentTimeLocal: string;
   status: OrderStatus;
@@ -327,8 +327,11 @@ async function sendOrderEmails(order: {
   }
 
   const formattedTotal = `$${(order.totalCents / 100).toFixed(2)}`;
+  const customerEmailDisplay = order.email
+    ? maskEmail(order.email)
+    : "no email provided";
 
-  await Promise.all([
+  const requests: Promise<Response>[] = [
     fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -339,23 +342,30 @@ async function sendOrderEmails(order: {
         from: env.RESEND_FROM_EMAIL,
         to: env.RESEND_OWNER_EMAIL,
         subject: `New Rau Om order ${order.orderNumber}`,
-        html: `<p>New order received.</p><p>Order: <strong>${order.orderNumber}</strong></p><p>Customer: ${order.customerName} (${maskEmail(order.email)})</p><p>Total: ${formattedTotal}</p><p>Fulfillment: ${order.fulfillmentTimeLocal}</p>`,
+        html: `<p>New order received.</p><p>Order: <strong>${order.orderNumber}</strong></p><p>Customer: ${order.customerName} (${customerEmailDisplay})</p><p>Total: ${formattedTotal}</p><p>Fulfillment: ${order.fulfillmentTimeLocal}</p>`,
       }),
     }),
-    fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: env.RESEND_FROM_EMAIL,
-        to: order.email,
-        subject: `Rau Om order received (${order.orderNumber})`,
-        html: `<p>Thanks for ordering from Rau Om.</p><p>We received your order <strong>${order.orderNumber}</strong> and it is currently <strong>${order.status}</strong>.</p><p>Total: ${formattedTotal}</p><p>Fulfillment: ${order.fulfillmentTimeLocal}</p>`,
+  ];
+
+  if (order.email) {
+    requests.push(
+      fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: env.RESEND_FROM_EMAIL,
+          to: order.email,
+          subject: `Rau Om order received (${order.orderNumber})`,
+          html: `<p>Thanks for ordering from Rau Om.</p><p>We received your order <strong>${order.orderNumber}</strong> and it is currently <strong>${order.status}</strong>.</p><p>Total: ${formattedTotal}</p><p>Fulfillment: ${order.fulfillmentTimeLocal}</p>`,
+        }),
       }),
-    }),
-  ]);
+    );
+  }
+
+  await Promise.all(requests);
 }
 
 export async function listTimeslotsForCart(
@@ -377,9 +387,17 @@ export async function createOrder(
   ipAddress: string | null,
 ): Promise<OrderSummary> {
   const parsed = checkoutSubmitSchema.parse(input);
+  const normalizedEmail = parsed.email?.trim().toLowerCase() ?? "";
   await verifyTurnstileToken(parsed.turnstileToken, ipAddress);
 
   const estimate = await computeEstimate(parsed);
+  if (
+    parsed.paymentMethod === "cash" &&
+    (estimate.subtotalCents > 10_000 || estimate.totalCents > 10_000)
+  ) {
+    throw new Error("Orders above $100 must be paid with Zelle or Venmo.");
+  }
+
   const operational = await getOperationalSettings();
 
   const timeslot = await getTimeslotById(parsed.timeslotId);
@@ -496,7 +514,7 @@ export async function createOrder(
         orderId,
         orderNumber,
         parsed.customerName,
-        parsed.email.toLowerCase(),
+        normalizedEmail,
         parsed.phone,
         parsed.fulfillmentType,
         `${timeslot.dateLocal} ${timeslot.startTimeLocal}`,
@@ -595,7 +613,7 @@ export async function createOrder(
     await sendOrderEmails({
       orderNumber: summary.orderNumber,
       customerName: parsed.customerName,
-      email: parsed.email,
+      email: normalizedEmail || undefined,
       totalCents: summary.totalCents,
       fulfillmentTimeLocal: summary.fulfillmentTimeLocal,
       status: summary.status,

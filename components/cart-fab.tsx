@@ -23,13 +23,12 @@ function getDiscountPercentForQuantity(
   return discountPercent;
 }
 
-function formatTierSummary(
+function getTierLines(
   tiers: DishBulkDiscountTier[],
   locale: Locale,
-  noneLabel: string,
-): string {
+): string[] {
   if (tiers.length === 0) {
-    return noneLabel;
+    return [];
   }
 
   return tiers
@@ -39,8 +38,7 @@ function formatTierSummary(
       locale === "vi"
         ? `Từ ${tier.minQuantity} phần giảm ${tier.discountPercent}%`
         : `${tier.minQuantity}+ servings save ${tier.discountPercent}%`,
-    )
-    .join(" · ");
+    );
 }
 
 export function CartFab({ locale }: { locale: Locale }) {
@@ -119,14 +117,18 @@ export function CartFab({ locale }: { locale: Locale }) {
                       <p>
                         {formatCurrency(item.priceCents)} {t.common.each}
                       </p>
-                      <p className="cart-item-bulk-line">
-                        {t.dishGrid.bulkDiscountLabel}:{" "}
-                        {formatTierSummary(
-                          item.bulkDiscountTiers,
-                          locale,
-                          t.dishGrid.bulkDiscountNone,
+                      <div className="cart-item-bulk-block">
+                        <p className="cart-item-bulk-line">{t.dishGrid.bulkDiscountLabel}:</p>
+                        {item.bulkDiscountTiers.length > 0 ? (
+                          <ul className="cart-item-bulk-list">
+                            {getTierLines(item.bulkDiscountTiers, locale).map((line) => (
+                              <li key={`${item.dishId}-${line}`}>{line}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="cart-item-bulk-none">{t.dishGrid.bulkDiscountNone}</p>
                         )}
-                      </p>
+                      </div>
                       {(() => {
                         const lineSubtotalCents = item.priceCents * item.quantity;
                         const discountPercent = getDiscountPercentForQuantity(

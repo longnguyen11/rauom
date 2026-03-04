@@ -90,8 +90,17 @@ export interface SiteMessages {
     phone: string;
     fulfillmentTitle: string;
     fulfillmentAria: string;
+    deliveryMethodPlaceholder: string;
+    chooseFulfillmentError: string;
     delivery: string;
     pickup: string;
+    deliveryAddressAutocomplete: string;
+    deliveryAddressPlaceholder: string;
+    deliveryAddressHint: string;
+    addressSearching: string;
+    addressLookupFailed: string;
+    addressNoResults: string;
+    addressSuggestionRequired: string;
     address1: string;
     address2: string;
     city: string;
@@ -106,6 +115,9 @@ export interface SiteMessages {
     cash: string;
     zelle: string;
     venmo: string;
+    cashDisabledOver100: string;
+    cashLimitNote: string;
+    cashLimitError: string;
     orderNotes: string;
     turnstileToken: string;
     summaryTitle: string;
@@ -122,6 +134,9 @@ export interface SiteMessages {
     total: string;
     enterDetails: string;
     orderReceived: string;
+    waitingForConfirmationTitle: string;
+    waitingForConfirmationBody: string;
+    orderNumberLabel: string;
     status: string;
     submit: string;
     submitting: string;
@@ -268,8 +283,17 @@ const EN_MESSAGES: SiteMessages = {
     phone: "Phone",
     fulfillmentTitle: "Fulfillment",
     fulfillmentAria: "Choose delivery or pickup",
+    deliveryMethodPlaceholder: "Select delivery method",
+    chooseFulfillmentError: "Please choose delivery or pickup.",
     delivery: "Delivery",
     pickup: "Pickup",
+    deliveryAddressAutocomplete: "Delivery address",
+    deliveryAddressPlaceholder: "Start typing your address...",
+    deliveryAddressHint: "Pick an address from suggestions to calculate delivery fee.",
+    addressSearching: "Searching addresses...",
+    addressLookupFailed: "Address suggestions are temporarily unavailable.",
+    addressNoResults: "No matching addresses found. Try a more complete street, city, and state.",
+    addressSuggestionRequired: "Please select a delivery address from suggestions.",
     address1: "Address line 1",
     address2: "Address line 2",
     city: "City",
@@ -284,6 +308,9 @@ const EN_MESSAGES: SiteMessages = {
     cash: "Cash",
     zelle: "Zelle",
     venmo: "Venmo",
+    cashDisabledOver100: "disabled for orders over $100",
+    cashLimitNote: "Orders above $100 must be paid with Zelle or Venmo.",
+    cashLimitError: "Orders above $100 must use Zelle or Venmo.",
     orderNotes: "Order notes",
     turnstileToken: "Turnstile token (required only when Turnstile secret is configured)",
     summaryTitle: "Estimated total",
@@ -300,6 +327,9 @@ const EN_MESSAGES: SiteMessages = {
     total: "Final total",
     enterDetails: "Enter fulfillment details to calculate total.",
     orderReceived: "Order received",
+    waitingForConfirmationTitle: "Waiting for confirmation",
+    waitingForConfirmationBody: "Your order was submitted. We will confirm your order shortly.",
+    orderNumberLabel: "Order number",
     status: "Status",
     submit: "Submit order",
     submitting: "Submitting...",
@@ -450,8 +480,17 @@ const VI_MESSAGES: SiteMessages = {
     phone: "Số điện thoại",
     fulfillmentTitle: "Hình thức nhận món",
     fulfillmentAria: "Chọn giao hàng hoặc nhận tại cửa hàng",
+    deliveryMethodPlaceholder: "Chọn hình thức nhận món",
+    chooseFulfillmentError: "Vui lòng chọn giao hàng hoặc nhận tại cửa hàng.",
     delivery: "Giao hàng",
     pickup: "Nhận tại cửa hàng",
+    deliveryAddressAutocomplete: "Địa chỉ giao hàng",
+    deliveryAddressPlaceholder: "Bắt đầu nhập địa chỉ...",
+    deliveryAddressHint: "Vui lòng chọn địa chỉ từ gợi ý để tính phí giao hàng.",
+    addressSearching: "Đang tìm địa chỉ...",
+    addressLookupFailed: "Hiện không thể lấy gợi ý địa chỉ.",
+    addressNoResults: "Không tìm thấy địa chỉ phù hợp. Vui lòng nhập đầy đủ số nhà, đường, thành phố và tiểu bang.",
+    addressSuggestionRequired: "Vui lòng chọn địa chỉ giao hàng từ danh sách gợi ý.",
     address1: "Địa chỉ dòng 1",
     address2: "Địa chỉ dòng 2",
     city: "Thành phố",
@@ -466,6 +505,9 @@ const VI_MESSAGES: SiteMessages = {
     cash: "Tiền mặt",
     zelle: "Zelle",
     venmo: "Venmo",
+    cashDisabledOver100: "không áp dụng cho đơn trên $100",
+    cashLimitNote: "Đơn trên $100 phải thanh toán bằng Zelle hoặc Venmo.",
+    cashLimitError: "Đơn trên $100 phải dùng Zelle hoặc Venmo.",
     orderNotes: "Ghi chú đơn hàng",
     turnstileToken: "Mã Turnstile (chỉ cần khi đã cấu hình Turnstile secret)",
     summaryTitle: "Tổng tạm tính",
@@ -482,6 +524,9 @@ const VI_MESSAGES: SiteMessages = {
     total: "Tổng cộng",
     enterDetails: "Nhập thông tin nhận món để tính tổng.",
     orderReceived: "Đã nhận đơn",
+    waitingForConfirmationTitle: "Đang chờ xác nhận",
+    waitingForConfirmationBody: "Đơn của bạn đã được gửi. Chúng tôi sẽ xác nhận trong thời gian sớm nhất.",
+    orderNumberLabel: "Mã đơn hàng",
     status: "Trạng thái",
     submit: "Gửi đơn",
     submitting: "Đang gửi...",
