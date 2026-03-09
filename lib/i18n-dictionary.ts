@@ -1,6 +1,6 @@
 ﻿export type Locale = "en" | "vi";
 
-export const DEFAULT_LOCALE: Locale = "en";
+export const DEFAULT_LOCALE: Locale = "vi";
 export const LOCALE_COOKIE_NAME = "rauom_locale";
 
 export interface SiteMessages {
@@ -208,8 +208,8 @@ const EN_MESSAGES: SiteMessages = {
   },
   localeToggle: {
     ariaLabel: "Language switch",
-    english: "EN",
-    vietnamese: "VI",
+    english: "English",
+    vietnamese: "Vietnamese",
   },
   common: {
     viewDetails: "View details",
@@ -405,8 +405,8 @@ const VI_MESSAGES: SiteMessages = {
   },
   localeToggle: {
     ariaLabel: "Chuyển ngôn ngữ",
-    english: "EN",
-    vietnamese: "VI",
+    english: "English",
+    vietnamese: "Vietnamese",
   },
   common: {
     viewDetails: "Xem chi tiết",
@@ -594,8 +594,8 @@ const MESSAGES: Record<Locale, SiteMessages> = {
 };
 
 export function normalizeLocale(value?: string | null): Locale {
-  if (value === "vi") {
-    return "vi";
+  if (value === "en" || value === "vi") {
+    return value;
   }
   return DEFAULT_LOCALE;
 }

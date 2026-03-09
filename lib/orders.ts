@@ -84,9 +84,28 @@ function assertDeliveryAddress(
 }
 
 function createOrderNumber(): string {
-  const now = new Date();
-  const date = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
-  return `RO-${date}-${nanoid(6).toUpperCase()}`;
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const first = alphabet[Math.floor(Math.random() * alphabet.length)];
+  const second = alphabet[Math.floor(Math.random() * alphabet.length)];
+  const digits = Math.floor(Math.random() * 10_000)
+    .toString()
+    .padStart(4, "0");
+
+  return `${first}${second}${digits}`;
+}
+
+function isOrderNumberUniqueConstraintError(error: unknown): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const rawMessage =
+    typeof error === "object" && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error);
+
+  const message = rawMessage.toLowerCase();
+  return message.includes("unique") && message.includes("order_number");
 }
 
 function formatUsd(cents: number): string {
@@ -436,7 +455,7 @@ export async function createOrder(
   });
 
   const orderId = `order_${nanoid(16)}`;
-  const orderNumber = createOrderNumber();
+  let orderNumber = "";
 
   try {
     const existingOrder = await dbAll<{
@@ -469,84 +488,100 @@ export async function createOrder(
       };
     }
 
-    const insertOrder = await db
-      .prepare(
-        `INSERT INTO orders (
-          id,
-          order_number,
-          customer_name,
-          email,
-          phone,
-          fulfillment_type,
-          fulfillment_time_local,
-          fulfillment_time_utc,
-          timeslot_id,
-          delivery_address_line1,
-          delivery_address_line2,
-          delivery_city,
-          delivery_state,
-          delivery_zip,
-          delivery_lat,
-          delivery_lng,
-          delivery_distance_mi,
-          subtotal_before_tax_cents,
-          tax_rate_snapshot_bps,
-          tax_amount_cents,
-          delivery_fee_cents,
-          total_after_tax_cents,
-          currency,
-          notes,
-          payment_method_selected,
-          payment_status,
-          payment_due_at_utc,
-          confirmation_deadline_utc,
-          status,
-          distance_source,
-          delivery_fee_rule_snapshot_json,
-          kitchen_priority_score,
-          kitchen_group,
-          idempotency_key,
-          created_at_utc,
-          updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 'unpaid', ?, ?, 'pending_confirmation', ?, ?, 0, 'cook_now', ?, ?, ?)`,
-      )
-      .bind(
-        orderId,
-        orderNumber,
-        parsed.customerName,
-        normalizedEmail,
-        parsed.phone,
-        parsed.fulfillmentType,
-        `${timeslot.dateLocal} ${timeslot.startTimeLocal}`,
-        timeslot.startTimeUtc,
-        timeslot.id,
-        estimate.deliveryAddress?.line1 ?? null,
-        estimate.deliveryAddress?.line2 ?? null,
-        estimate.deliveryAddress?.city ?? null,
-        estimate.deliveryAddress?.state ?? null,
-        estimate.deliveryAddress?.zip ?? null,
-        estimate.quote?.destinationLat ?? null,
-        estimate.quote?.destinationLng ?? null,
-        estimate.quote?.distanceMiles ?? null,
-        estimate.subtotalAfterDiscountCents,
-        estimate.taxRateBps,
-        estimate.taxAmountCents,
-        estimate.deliveryFeeCents,
-        estimate.totalCents,
-        parsed.notes ?? null,
-        parsed.paymentMethod,
-        confirmationDeadline.toString(),
-        confirmationDeadline.toString(),
-        estimate.quote?.distanceSource ?? null,
-        JSON.stringify(estimate.pricingRule),
-        parsed.idempotencyKey,
-        now.toString(),
-        now.toString(),
-      )
-      .run();
+    let inserted = false;
+    for (let attempt = 0; attempt < 25; attempt += 1) {
+      orderNumber = createOrderNumber();
+      try {
+        const insertOrder = await db
+          .prepare(
+            `INSERT INTO orders (
+              id,
+              order_number,
+              customer_name,
+              email,
+              phone,
+              fulfillment_type,
+              fulfillment_time_local,
+              fulfillment_time_utc,
+              timeslot_id,
+              delivery_address_line1,
+              delivery_address_line2,
+              delivery_city,
+              delivery_state,
+              delivery_zip,
+              delivery_lat,
+              delivery_lng,
+              delivery_distance_mi,
+              subtotal_before_tax_cents,
+              tax_rate_snapshot_bps,
+              tax_amount_cents,
+              delivery_fee_cents,
+              total_after_tax_cents,
+              currency,
+              notes,
+              payment_method_selected,
+              payment_status,
+              payment_due_at_utc,
+              confirmation_deadline_utc,
+              status,
+              distance_source,
+              delivery_fee_rule_snapshot_json,
+              kitchen_priority_score,
+              kitchen_group,
+              idempotency_key,
+              created_at_utc,
+              updated_at_utc
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 'unpaid', ?, ?, 'pending_confirmation', ?, ?, 0, 'cook_now', ?, ?, ?)`,
+          )
+          .bind(
+            orderId,
+            orderNumber,
+            parsed.customerName,
+            normalizedEmail,
+            parsed.phone,
+            parsed.fulfillmentType,
+            `${timeslot.dateLocal} ${timeslot.startTimeLocal}`,
+            timeslot.startTimeUtc,
+            timeslot.id,
+            estimate.deliveryAddress?.line1 ?? null,
+            estimate.deliveryAddress?.line2 ?? null,
+            estimate.deliveryAddress?.city ?? null,
+            estimate.deliveryAddress?.state ?? null,
+            estimate.deliveryAddress?.zip ?? null,
+            estimate.quote?.destinationLat ?? null,
+            estimate.quote?.destinationLng ?? null,
+            estimate.quote?.distanceMiles ?? null,
+            estimate.subtotalAfterDiscountCents,
+            estimate.taxRateBps,
+            estimate.taxAmountCents,
+            estimate.deliveryFeeCents,
+            estimate.totalCents,
+            parsed.notes ?? null,
+            parsed.paymentMethod,
+            confirmationDeadline.toString(),
+            confirmationDeadline.toString(),
+            estimate.quote?.distanceSource ?? null,
+            JSON.stringify(estimate.pricingRule),
+            parsed.idempotencyKey,
+            now.toString(),
+            now.toString(),
+          )
+          .run();
 
-    if ((insertOrder.meta.changes ?? 0) !== 1) {
-      throw new Error("Order could not be created. Please retry.");
+        if ((insertOrder.meta.changes ?? 0) === 1) {
+          inserted = true;
+          break;
+        }
+      } catch (error) {
+        if (isOrderNumberUniqueConstraintError(error)) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!inserted) {
+      throw new Error("Could not allocate a unique order number. Please retry.");
     }
 
     const dishMap = await mapDishesById(parsed.items.map((item) => item.dishId));

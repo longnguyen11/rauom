@@ -13,6 +13,9 @@ export function LocaleToggle({ locale }: LocaleToggleProps) {
   const router = useRouter();
   const [pending, setPending] = useState<Locale | null>(null);
   const t = getMessages(locale);
+  const nextLocale: Locale = locale === "vi" ? "en" : "vi";
+  const buttonLabel =
+    nextLocale === "en" ? t.localeToggle.english : t.localeToggle.vietnamese;
 
   async function setLocale(nextLocale: Locale) {
     if (nextLocale === locale || pending) {
@@ -38,19 +41,11 @@ export function LocaleToggle({ locale }: LocaleToggleProps) {
     <div className="locale-toggle" role="group" aria-label={t.localeToggle.ariaLabel}>
       <button
         type="button"
-        className={locale === "en" ? "locale-button active" : "locale-button"}
-        onClick={() => void setLocale("en")}
+        className="locale-button active"
+        onClick={() => void setLocale(nextLocale)}
         disabled={pending !== null}
       >
-        {t.localeToggle.english}
-      </button>
-      <button
-        type="button"
-        className={locale === "vi" ? "locale-button active" : "locale-button"}
-        onClick={() => void setLocale("vi")}
-        disabled={pending !== null}
-      >
-        {t.localeToggle.vietnamese}
+        {buttonLabel}
       </button>
     </div>
   );
