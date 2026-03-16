@@ -118,6 +118,16 @@ export default async function DishPage({ params }: DishPageProps) {
             <strong>{formatCurrency(dish.priceCents)}</strong>
           </p>
           <p>{dish.longDescription}</p>
+          {(dish.category === "bundle" || dish.isAnchorDish) && (
+            <ul className="tag-row">
+              {dish.category === "bundle" && (
+                <li className="tag-pill tag-pill-bundle">{messages.dishGrid.bundleMealBadge}</li>
+              )}
+              {dish.isAnchorDish && (
+                <li className="tag-pill tag-pill-anchor">{messages.dishGrid.anchorDishBadge}</li>
+              )}
+            </ul>
+          )}
           <p>
             <strong>{messages.dishPage.leadTime}:</strong> {dish.leadTimeDays} {messages.common.daySuffix}
           </p>

@@ -1,5 +1,11 @@
 ﻿import { Temporal } from "@js-temporal/polyfill";
 
+import {
+  SATURDAY_DAY_OF_WEEK,
+  getNextFulfillmentSaturday,
+  isOrderWindowDay,
+  isSaturdayDateLocal,
+} from "@/lib/batch-cycle";
 import type { FulfillmentType, Timeslot } from "@/lib/types";
 import { dbAll, requireDb } from "@/lib/db";
 import { getBlackoutDateSet, getOperationalSettings } from "@/lib/settings";
@@ -42,11 +48,12 @@ function mapTimeslotRow(row: TimeslotRow): Timeslot {
   };
 }
 
-async function countUpcomingTimeslots(): Promise<number> {
+async function countUpcomingSaturdayTimeslots(): Promise<number> {
   const rows = await dbAll<{ count: number }>(
     `SELECT COUNT(*) as count
      FROM fulfillment_timeslots
-     WHERE start_time_utc >= datetime('now')`,
+     WHERE start_time_utc >= datetime('now')
+       AND strftime('%w', date_local) = '6'`,
   );
 
   return rows[0]?.count ?? 0;
@@ -54,11 +61,12 @@ async function countUpcomingTimeslots(): Promise<number> {
 
 export async function ensureUpcomingTimeslots(days = 14): Promise<void> {
   const db = requireDb();
-  const existing = await countUpcomingTimeslots();
-  const slotsPerDay =
+  const existing = await countUpcomingSaturdayTimeslots();
+  const slotsPerSaturday =
     DEFAULT_SLOT_SPECS.delivery.length + DEFAULT_SLOT_SPECS.pickup.length;
+  const targetSaturdayCount = Math.max(1, Math.ceil((days + 1) / 7)) * slotsPerSaturday;
 
-  if (existing >= days * slotsPerDay) {
+  if (existing >= targetSaturdayCount) {
     return;
   }
 
@@ -69,6 +77,9 @@ export async function ensureUpcomingTimeslots(days = 14): Promise<void> {
   const statements: D1PreparedStatement[] = [];
   for (let dayOffset = 0; dayOffset <= days; dayOffset += 1) {
     const dateLocal = now.add({ days: dayOffset }).toPlainDate();
+    if (dateLocal.dayOfWeek !== SATURDAY_DAY_OF_WEEK) {
+      continue;
+    }
 
     for (const slotType of ["delivery", "pickup"] as const) {
       for (const startTimeLocal of DEFAULT_SLOT_SPECS[slotType]) {
@@ -132,10 +143,15 @@ export async function listAvailableTimeslots(
 ): Promise<Timeslot[]> {
   await ensureUpcomingTimeslots(daysAhead + 7);
 
-  const { timezone, minLeadDaysDefault, manualPaymentBufferHours } =
-    await getOperationalSettings();
+  const { timezone, manualPaymentBufferHours } = await getOperationalSettings();
+  const nowLocal = Temporal.Now.zonedDateTimeISO(timezone);
+  if (!isOrderWindowDay(nowLocal.dayOfWeek)) {
+    return [];
+  }
 
-  const finalLeadDays = Math.max(minLeadDaysDefault, minDishLeadDays);
+  const targetSaturday = getNextFulfillmentSaturday(nowLocal).toString();
+
+  const finalLeadDays = Math.max(0, minDishLeadDays);
   const minInstant = minEligibleInstant(
     finalLeadDays,
     manualPaymentBufferHours,
@@ -164,16 +180,19 @@ export async function listAvailableTimeslots(
     FROM fulfillment_timeslots
     WHERE slot_type = ?
       AND is_open = 1
+      AND date_local = ?
       AND reserved_count < capacity_limit
       AND start_time_utc >= ?
       AND start_time_utc <= ?
     ORDER BY start_time_utc ASC
     LIMIT 500`,
-    [slotType, minInstant.toString(), maxInstant.toString()],
+    [slotType, targetSaturday, minInstant.toString(), maxInstant.toString()],
   );
 
   return rows
-    .filter((row) => !blackoutDates.has(row.date_local))
+    .filter(
+      (row) => !blackoutDates.has(row.date_local) && isSaturdayDateLocal(row.date_local),
+    )
     .map(mapTimeslotRow);
 }
 
@@ -236,3 +255,4 @@ export async function releaseTimeslotCapacity(id: string): Promise<void> {
     .bind(id)
     .run();
 }
+

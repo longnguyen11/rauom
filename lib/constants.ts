@@ -1,5 +1,5 @@
 ﻿export const BRAND_NAME = "Rau Om";
-export const BRAND_SUBTITLE = "Vietnamese and Asian Home-Cooked Dishes in Orlando";
+export const BRAND_SUBTITLE = "Weekly Batch-Cooked Vietnamese Home Meals in Orlando";
 
 export const ORIGIN_ADDRESS_DEFAULT = "720 Orange Ave, Longwood, FL 32750";
 export const ORIGIN_LAT_DEFAULT = 28.7001;

@@ -18,16 +18,41 @@ interface DishFilterGridProps {
 export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridProps) {
   const [activeTag, setActiveTag] = useState<string>("all");
   const t = getMessages(locale);
+  const orderedDishes = useMemo(() => {
+    return [...dishes].sort((a, b) => {
+      const bundleRankA = a.category === "bundle" ? 1 : 0;
+      const bundleRankB = b.category === "bundle" ? 1 : 0;
+      const anchorRankA = a.isAnchorDish ? 1 : 0;
+      const anchorRankB = b.isAnchorDish ? 1 : 0;
+      const featuredRankA = a.isFeaturedWeek ? 1 : 0;
+      const featuredRankB = b.isFeaturedWeek ? 1 : 0;
+
+      return (
+        bundleRankB - bundleRankA ||
+        anchorRankB - anchorRankA ||
+        featuredRankB - featuredRankA ||
+        a.name.localeCompare(b.name)
+      );
+    });
+  }, [dishes]);
 
   const filtered = useMemo(() => {
-    if (activeTag === "all") {
-      return dishes;
+    if (activeTag === "bundle") {
+      return orderedDishes.filter((dish) => dish.category === "bundle");
     }
 
-    return dishes.filter((dish) =>
+    if (activeTag === "anchor") {
+      return orderedDishes.filter((dish) => dish.isAnchorDish);
+    }
+
+    if (activeTag === "all") {
+      return orderedDishes;
+    }
+
+    return orderedDishes.filter((dish) =>
       dish.dietaryTags.some((tag) => tag.code === activeTag),
     );
-  }, [activeTag, dishes]);
+  }, [activeTag, orderedDishes]);
 
   return (
     <section className="dish-grid-section" aria-labelledby="dish-grid-heading">
@@ -45,6 +70,24 @@ export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridPro
           onClick={() => setActiveTag("all")}
         >
           {t.dishGrid.all}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTag === "bundle"}
+          className={activeTag === "bundle" ? "chip active" : "chip"}
+          onClick={() => setActiveTag("bundle")}
+        >
+          {t.dishGrid.bundleMeals}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTag === "anchor"}
+          className={activeTag === "anchor" ? "chip active" : "chip"}
+          onClick={() => setActiveTag("anchor")}
+        >
+          {t.dishGrid.anchorFavorites}
         </button>
 
         {tagOptions.map((tag) => (
@@ -92,6 +135,12 @@ export function DishFilterGrid({ dishes, tagOptions, locale }: DishFilterGridPro
                 </p>
 
                 <ul className="tag-row" aria-label="Dietary tags">
+                  {dish.category === "bundle" && (
+                    <li className="tag-pill tag-pill-bundle">{t.dishGrid.bundleMealBadge}</li>
+                  )}
+                  {dish.isAnchorDish && (
+                    <li className="tag-pill tag-pill-anchor">{t.dishGrid.anchorDishBadge}</li>
+                  )}
                   {dish.dietaryTags.map((tag) => (
                     <li key={`${dish.id}-${tag.code}`} className="tag-pill">
                       {tag.label}

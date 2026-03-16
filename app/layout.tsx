@@ -22,14 +22,14 @@ const bodyFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} | Orlando Vietnamese Home-Cooked Dishes`,
+  title: `${BRAND_NAME} | Weekly Batch-Cooked Vietnamese Home Meals`,
   description:
-    "Browse featured Vietnamese and Asian home-cooked dishes from Rau Om in Orlando. Place delivery or pickup orders with lead-time protected checkout.",
+    "Order Monday-Friday from Rau Om's weekly menu, then receive Saturday batch-cooked Vietnamese home meals in Orlando.",
   metadataBase: new URL("https://rau-om.example.com"),
   openGraph: {
-    title: `${BRAND_NAME} | Orlando Vietnamese Home-Cooked Dishes`,
+    title: `${BRAND_NAME} | Weekly Batch-Cooked Vietnamese Home Meals`,
     description:
-      "Fresh, cook-to-order Vietnamese and Asian dishes in Orlando. Delivery and pickup with clear lead-time scheduling.",
+      "Weekly batch-cooked Vietnamese home meals in Orlando with Saturday fulfillment and early-order discounts.",
     type: "website",
   },
 };

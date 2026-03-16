@@ -1,5 +1,5 @@
 export type DishStatus = "draft" | "scheduled" | "live" | "archived" | "sold_out";
-export type DishCategory = "main" | "side" | "dessert";
+export type DishCategory = "main" | "side" | "dessert" | "bundle";
 
 export type FulfillmentType = "delivery" | "pickup";
 
@@ -52,6 +52,7 @@ export interface Dish {
   status: DishStatus;
   leadTimeDays: number;
   isFeaturedWeek: boolean;
+  isAnchorDish: boolean;
   availableFromUtc: string | null;
   availableToUtc: string | null;
   createdAtUtc: string;
@@ -101,6 +102,7 @@ export interface CheckoutSubmitInput extends CheckoutEstimateInput {
   email?: string;
   phone: string;
   notes?: string;
+  nextWeekVote?: string;
   paymentMethod: PaymentMethod;
   timeslotId: string;
   turnstileToken?: string;
@@ -121,6 +123,8 @@ export interface OrderEstimate {
   totalItemQuantity: number;
   subtotalCents: number;
   bulkDiscountCents: number;
+  earlyOrderDiscountCents: number;
+  earlyOrderDiscountPercent: number;
   subtotalAfterDiscountCents: number;
   deliveryFeeCents: number;
   taxRateBps: number;

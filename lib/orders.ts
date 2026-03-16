@@ -2,6 +2,12 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
+import {
+  getEarlyOrderDiscountPercent,
+  getNextFulfillmentSaturday,
+  isOrderWindowDay,
+  isSaturdayDateLocal,
+} from "@/lib/batch-cycle";
 import { getEnv } from "@/lib/cloudflare";
 import { mapDishesById } from "@/lib/dishes";
 import { quoteDeliveryForAddress } from "@/lib/distance";
@@ -62,6 +68,7 @@ const checkoutSubmitSchema = checkoutEstimateSchema.extend({
     .max(25)
     .regex(/^[\d\s()+-]{10,25}$/),
   notes: z.string().max(1000).optional(),
+  nextWeekVote: z.string().trim().max(120).optional(),
   paymentMethod: z.enum(["cash", "zelle", "venmo"]),
   timeslotId: z.string().min(3),
   turnstileToken: z.string().optional(),
@@ -135,6 +142,22 @@ function getBulkDiscountRuleLabel(tiers: DishBulkDiscountTier[]): string {
   }).join("; ");
 }
 
+function buildOrderNotes(
+  notes: string | undefined,
+  nextWeekVote: string | undefined,
+): string | null {
+  const lines = [
+    notes?.trim() || "",
+    nextWeekVote?.trim() ? `Next week meal vote: ${nextWeekVote.trim()}` : "",
+  ].filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  return lines.join("\n");
+}
+
 function maskEmail(email: string): string {
   const [localPart, domain] = email.split("@");
   if (!localPart || !domain || localPart.length < 3) {
@@ -201,7 +224,6 @@ async function computeEstimate(
   let subtotalCents = 0;
   let totalItemQuantity = 0;
   let bulkDiscountCents = 0;
-  let maxDishLeadTimeDays = 1;
   const bulkPolicyLines = new Set<string>();
 
   for (const item of parsed.items) {
@@ -223,15 +245,32 @@ async function computeEstimate(
     subtotalCents += lineSubtotalCents;
     totalItemQuantity += item.quantity;
     bulkDiscountCents += lineDiscountCents;
-    maxDishLeadTimeDays = Math.max(maxDishLeadTimeDays, dish.leadTimeDays);
-
     bulkPolicyLines.add(`${dish.name}: ${getBulkDiscountRuleLabel(dish.bulkDiscountTiers)}`);
   }
 
-  const subtotalAfterDiscountCents = Math.max(0, subtotalCents - bulkDiscountCents);
-
   const operational = await getOperationalSettings();
-  const leadTimeDays = Math.max(maxDishLeadTimeDays, operational.minLeadDaysDefault);
+  const nowLocal = Temporal.Now.zonedDateTimeISO(operational.timezone);
+  if (!isOrderWindowDay(nowLocal.dayOfWeek)) {
+    throw new Error(
+      "Orders are open Monday through Friday only. Ordering reopens on Monday for Saturday delivery.",
+    );
+  }
+
+  const targetSaturday = getNextFulfillmentSaturday(nowLocal).toString();
+  const leadTimeDays = 0;
+  const maxDishLeadTimeDays = 0;
+  const subtotalAfterBulkDiscountCents = Math.max(0, subtotalCents - bulkDiscountCents);
+  const earlyOrderDiscountPercent = getEarlyOrderDiscountPercent(nowLocal.dayOfWeek);
+  const earlyOrderDiscountCents =
+    earlyOrderDiscountPercent > 0
+      ? Math.round(
+          (subtotalAfterBulkDiscountCents * earlyOrderDiscountPercent) / 100,
+        )
+      : 0;
+  const subtotalAfterDiscountCents = Math.max(
+    0,
+    subtotalAfterBulkDiscountCents - earlyOrderDiscountCents,
+  );
 
   const pricingRule = await getActiveDeliveryPricingRule();
 
@@ -281,10 +320,16 @@ async function computeEstimate(
   );
 
   const notes = [
-    `Lead time requirement: ${leadTimeDays} day(s) based on selected dishes.`,
+    `Batch cycle: orders are accepted Monday-Friday and fulfilled on Saturday (${targetSaturday}).`,
     `Manual payment confirmation must happen at least ${operational.manualPaymentBufferHours} hours before fulfillment.`,
     ...[...bulkPolicyLines].map((line) => `Bulk policy - ${line}`),
   ];
+
+  if (earlyOrderDiscountCents > 0) {
+    notes.unshift(
+      `Early order discount applied (${earlyOrderDiscountPercent}%): -${formatUsd(earlyOrderDiscountCents)}.`,
+    );
+  }
 
   if (bulkDiscountCents > 0) {
     notes.unshift(`Bulk discount applied: -${formatUsd(bulkDiscountCents)}.`);
@@ -295,6 +340,8 @@ async function computeEstimate(
     totalItemQuantity,
     subtotalCents,
     bulkDiscountCents,
+    earlyOrderDiscountCents,
+    earlyOrderDiscountPercent,
     subtotalAfterDiscountCents,
     deliveryFeeCents,
     taxRateBps,
@@ -320,6 +367,8 @@ export async function estimateOrder(
     totalItemQuantity: estimate.totalItemQuantity,
     subtotalCents: estimate.subtotalCents,
     bulkDiscountCents: estimate.bulkDiscountCents,
+    earlyOrderDiscountCents: estimate.earlyOrderDiscountCents,
+    earlyOrderDiscountPercent: estimate.earlyOrderDiscountPercent,
     subtotalAfterDiscountCents: estimate.subtotalAfterDiscountCents,
     deliveryFeeCents: estimate.deliveryFeeCents,
     taxRateBps: estimate.taxRateBps,
@@ -393,12 +442,17 @@ export async function listTimeslotsForCart(
   daysAhead = 60,
 ) {
   const dishMap = await mapDishesById(items.map((item) => item.dishId));
-  const maxLeadDays = Math.max(
-    1,
-    ...items.map((item) => dishMap.get(item.dishId)?.leadTimeDays ?? 1),
-  );
+  if (dishMap.size !== items.length) {
+    return [];
+  }
 
-  return listAvailableTimeslots(fulfillmentType, maxLeadDays, daysAhead);
+  const { timezone } = await getOperationalSettings();
+  const nowLocal = Temporal.Now.zonedDateTimeISO(timezone);
+  if (!isOrderWindowDay(nowLocal.dayOfWeek)) {
+    return [];
+  }
+
+  return listAvailableTimeslots(fulfillmentType, 0, daysAhead);
 }
 
 export async function createOrder(
@@ -418,6 +472,8 @@ export async function createOrder(
   }
 
   const operational = await getOperationalSettings();
+  const nowLocal = Temporal.Now.zonedDateTimeISO(operational.timezone);
+  const targetSaturday = getNextFulfillmentSaturday(nowLocal).toString();
 
   const timeslot = await getTimeslotById(parsed.timeslotId);
   if (!timeslot) {
@@ -426,6 +482,12 @@ export async function createOrder(
 
   if (timeslot.slotType !== parsed.fulfillmentType) {
     throw new Error("Selected timeslot does not match fulfillment type.");
+  }
+
+  if (!isSaturdayDateLocal(timeslot.dateLocal) || timeslot.dateLocal !== targetSaturday) {
+    throw new Error(
+      `Orders this week are fulfilled on Saturday (${targetSaturday}) only. Please pick an eligible Saturday slot.`,
+    );
   }
 
   if (
@@ -456,6 +518,7 @@ export async function createOrder(
 
   const orderId = `order_${nanoid(16)}`;
   let orderNumber = "";
+  const orderNotes = buildOrderNotes(parsed.notes, parsed.nextWeekVote);
 
   try {
     const existingOrder = await dbAll<{
@@ -556,7 +619,7 @@ export async function createOrder(
             estimate.taxAmountCents,
             estimate.deliveryFeeCents,
             estimate.totalCents,
-            parsed.notes ?? null,
+            orderNotes,
             parsed.paymentMethod,
             confirmationDeadline.toString(),
             confirmationDeadline.toString(),

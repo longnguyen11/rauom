@@ -51,6 +51,10 @@ export interface SiteMessages {
     subtitle: string;
     filterAria: string;
     all: string;
+    bundleMeals: string;
+    anchorFavorites: string;
+    bundleMealBadge: string;
+    anchorDishBadge: string;
     minimumLeadTime: string;
     bulkDiscountLabel: string;
     bulkDiscountNone: string;
@@ -119,12 +123,14 @@ export interface SiteMessages {
     cashLimitNote: string;
     cashLimitError: string;
     orderNotes: string;
+    orderWindowNote: string;
     turnstileToken: string;
     summaryTitle: string;
     itemsTitle: string;
     quantityLabel: string;
     cartSubtotal: string;
     bulkDiscount: string;
+    earlyOrderDiscount: string;
     subtotalAfterDiscount: string;
     updatingEstimate: string;
     deliveryFee: string;
@@ -138,6 +144,16 @@ export interface SiteMessages {
     waitingForConfirmationBody: string;
     orderNumberLabel: string;
     status: string;
+    voteTitle: string;
+    votePrompt: string;
+    votePlaceholder: string;
+    voteOptionBunBoHue: string;
+    voteOptionComTam: string;
+    voteOptionCaRiGa: string;
+    voteOptionBanhMiChao: string;
+    voteOptionOther: string;
+    voteOtherLabel: string;
+    voteOtherPlaceholder: string;
     submit: string;
     submitting: string;
   };
@@ -201,10 +217,11 @@ const EN_MESSAGES: SiteMessages = {
     navCheckout: "Checkout",
     mainNavigationAria: "Main navigation",
     brandAria: "Rau Om homepage",
-    footerLine: "Rau Om | 720 Orange Ave, Longwood, FL 32750 | Delivery and pickup in Orlando area",
+    footerLine:
+      "Rau Om | 720 Orange Ave, Longwood, FL 32750 | Weekly batch cooking with Saturday delivery windows",
     footerAllergens: "Allergens",
     footerDeliveryFees: "Delivery Fees",
-    footerFreshCook: "Fresh-Cook Policy",
+    footerFreshCook: "Batch-Cook Policy",
   },
   localeToggle: {
     ariaLabel: "Language switch",
@@ -233,26 +250,31 @@ const EN_MESSAGES: SiteMessages = {
   },
   hero: {
     sectionAria: "Featured dishes",
-    eyebrow: "This Week's Featured Dish",
+    eyebrow: "This Week's Batch Menu Pick",
     controlsAria: "Carousel controls",
     showDishPrefix: "Show",
   },
   dishGrid: {
     title: "Browse Dishes",
-    subtitle: "Fresh-cook model: kitchen starts after order confirmation.",
+    subtitle:
+      "Batch-cooking model: order Monday-Friday, we cook on Saturday, then deliver Saturday windows.",
     filterAria: "Filter dishes by dietary tags",
     all: "All",
+    bundleMeals: "Bundle Meals",
+    anchorFavorites: "Anchor Dishes",
+    bundleMealBadge: "Bundle Meal",
+    anchorDishBadge: "Anchor Dish",
     minimumLeadTime: "Minimum lead time",
     bulkDiscountLabel: "Bulk discount",
     bulkDiscountNone: "No bulk discount",
   },
   home: {
-    trustTitle: "Trust and Freshness",
+    trustTitle: "Weekly Batch-Cook Promise",
     trustBody:
-      "Every order is prepared after confirmation. Rau Om does not batch-cook for instant dispatch, so quality and timing stay consistent.",
-    trustBulletLeadTime: "Lead-time protected scheduling (1-3 days by dish complexity)",
-    trustBulletDelivery: "Delivery range checks with pickup fallback",
-    trustBulletPayment: "Manual payment support at launch: cash, Zelle, Venmo",
+      "Rau Om is a home-cook batch service. Customers place orders Monday through Friday, kitchen prep happens Saturday, and delivery runs Saturday windows.",
+    trustBulletLeadTime: "Early-order incentives: 10% off Monday, 5% off Tuesday/Wednesday",
+    trustBulletDelivery: "Anchor dishes stay on the menu while rotating dishes change weekly",
+    trustBulletPayment: "Bundle meals are available for families and weekly meal prep",
     readFlow: "Read the full ordering flow",
   },
   newsletter: {
@@ -268,7 +290,7 @@ const EN_MESSAGES: SiteMessages = {
   checkoutPage: {
     title: "Checkout",
     intro:
-      "Fresh-cook policy applies: all orders are prepared after confirmation. Slot eligibility enforces dish lead-time and payment confirmation buffer.",
+      "Weekly batch policy applies: orders open Monday-Friday and are fulfilled on Saturday. Early-order discounts are applied automatically based on order day.",
   },
   checkout: {
     empty: "Your cart is empty. Add dishes first.",
@@ -302,7 +324,7 @@ const EN_MESSAGES: SiteMessages = {
     slot: "Fulfillment slot",
     fulfillmentDate: "Fulfillment date",
     slotPlaceholder: "Select a slot",
-    noSlotsForDate: "No available slots for the selected date.",
+    noSlotsForDate: "No eligible slots right now. Orders open Monday-Friday for Saturday fulfillment.",
     paymentNotesTitle: "Payment and Notes",
     paymentMethod: "Payment method",
     cash: "Cash",
@@ -312,12 +334,15 @@ const EN_MESSAGES: SiteMessages = {
     cashLimitNote: "Orders above $100 must be paid with Zelle or Venmo.",
     cashLimitError: "Orders above $100 must use Zelle or Venmo.",
     orderNotes: "Order notes",
+    orderWindowNote:
+      "Ordering is open Monday-Friday. Kitchen cooks in one Saturday batch and delivers Saturday windows.",
     turnstileToken: "Turnstile token (required only when Turnstile secret is configured)",
     summaryTitle: "Estimated total",
     itemsTitle: "Order items",
     quantityLabel: "Qty",
     cartSubtotal: "Cart subtotal",
     bulkDiscount: "Bulk discount",
+    earlyOrderDiscount: "Early-order discount",
     subtotalAfterDiscount: "Subtotal after discount",
     updatingEstimate: "Updating estimate...",
     deliveryFee: "Delivery fee",
@@ -331,6 +356,16 @@ const EN_MESSAGES: SiteMessages = {
     waitingForConfirmationBody: "Your order was submitted. We will confirm your order shortly.",
     orderNumberLabel: "Order number",
     status: "Status",
+    voteTitle: "Vote for Next Week",
+    votePrompt: "Choose a dish you want on next week's rotating menu",
+    votePlaceholder: "No vote selected",
+    voteOptionBunBoHue: "Bun Bo Hue",
+    voteOptionComTam: "Com Tam Suon Nuong",
+    voteOptionCaRiGa: "Ca Ri Ga",
+    voteOptionBanhMiChao: "Banh Mi Chao",
+    voteOptionOther: "Other (type your vote)",
+    voteOtherLabel: "Your custom vote",
+    voteOtherPlaceholder: "Example: Bun Rieu or Mi Quang",
     submit: "Submit order",
     submitting: "Submitting...",
   },
@@ -357,12 +392,12 @@ const EN_MESSAGES: SiteMessages = {
   },
   howOrdering: {
     title: "How Ordering Works",
-    step1: "Browse dishes and add items to cart.",
-    step2: "Select delivery or pickup and choose an eligible timeslot.",
-    step3: "Checkout validates lead-time, capacity, distance, and tax estimate.",
-    step4: "Submit with manual payment method (cash, Zelle, Venmo).",
-    step5: "Order enters pending confirmation, then kitchen begins after confirmation.",
-    note: "Lead-time defaults to at least 1 day, and some dishes require 2-3 days.",
+    step1: "Browse anchor dishes, rotating weekly dishes, and bundle meals.",
+    step2: "Place your order Monday through Friday and choose your Saturday fulfillment slot.",
+    step3: "Checkout applies bulk rules, early-order discount, delivery fee, and tax estimate.",
+    step4: "Submit payment details and optionally vote for next week's rotating dish.",
+    step5: "Kitchen batch-cooks on Saturday, then deliveries go out in Saturday windows.",
+    note: "Early-order discount policy: Monday 10%, Tuesday/Wednesday 5%, Thursday/Friday 0%.",
   },
   allergens: {
     title: "Allergens Disclosure",
@@ -381,13 +416,14 @@ const EN_MESSAGES: SiteMessages = {
     pickupFallback: "If delivery is unavailable, pickup remains available at checkout.",
   },
   freshCook: {
-    title: "Fresh-Cook Lead-Time Policy",
+    title: "Weekly Batch-Cooking Policy",
     paragraph:
-      "Rau Om cooks dishes after order confirmation. We do not batch-cook for instant dispatch.",
-    bullet1: "Default minimum lead-time: 1 day",
-    bullet2: "Some dishes require 2 or 3 days",
-    bullet3: "Manual payment confirmation must be completed before fulfillment window",
-    closing: "This policy protects ingredient quality, food safety, and kitchen timing.",
+      "Rau Om runs a weekly home-kitchen batch cycle instead of daily cook-to-order dispatch.",
+    bullet1: "Order window: Monday through Friday",
+    bullet2: "Kitchen cook day: Saturday",
+    bullet3: "Delivery window: Saturday slots only",
+    closing:
+      "This rhythm helps reduce kitchen stress, improves prep planning, and keeps quality consistent.",
   },
 };
 
@@ -398,10 +434,11 @@ const VI_MESSAGES: SiteMessages = {
     navCheckout: "Thanh toán",
     mainNavigationAria: "Điều hướng chính",
     brandAria: "Trang chủ Rau Om",
-    footerLine: "Rau Om | 720 Orange Ave, Longwood, FL 32750 | Giao hàng và nhận tại cửa hàng khu vực Orlando",
+    footerLine:
+      "Rau Om | 720 Orange Ave, Longwood, FL 32750 | Bếp gia đình nấu theo đợt, giao hàng vào khung giờ thứ Bảy",
     footerAllergens: "Cảnh báo dị ứng",
     footerDeliveryFees: "Phí giao hàng",
-    footerFreshCook: "Chính sách nấu tươi",
+    footerFreshCook: "Chính sách nấu theo đợt",
   },
   localeToggle: {
     ariaLabel: "Chuyển ngôn ngữ",
@@ -430,26 +467,31 @@ const VI_MESSAGES: SiteMessages = {
   },
   hero: {
     sectionAria: "Món nổi bật",
-    eyebrow: "Món nổi bật tuần này",
+    eyebrow: "Món tiêu biểu trong thực đơn nấu theo đợt tuần này",
     controlsAria: "Điều khiển trình chiếu",
     showDishPrefix: "Hiển thị",
   },
   dishGrid: {
     title: "Danh sách món",
-    subtitle: "Mô hình nấu tươi: bếp chỉ bắt đầu sau khi xác nhận đơn.",
+    subtitle:
+      "Mô hình nấu theo đợt: đặt món từ thứ Hai đến thứ Sáu, bếp nấu thứ Bảy và giao trong các khung giờ thứ Bảy.",
     filterAria: "Lọc món theo nhãn chế độ ăn",
     all: "Tất cả",
+    bundleMeals: "Combo tuần",
+    anchorFavorites: "Món cố định",
+    bundleMealBadge: "Món combo",
+    anchorDishBadge: "Món cố định",
     minimumLeadTime: "Thời gian đặt trước tối thiểu",
     bulkDiscountLabel: "Ưu đãi số lượng",
     bulkDiscountNone: "Chưa có ưu đãi số lượng",
   },
   home: {
-    trustTitle: "Cam kết chất lượng",
+    trustTitle: "Cam kết nấu theo đợt hằng tuần",
     trustBody:
-      "Mỗi đơn đều được nấu sau khi xác nhận. Rau Om không nấu hàng loạt để giao ngay, nhằm giữ chất lượng và thời điểm phục vụ tốt nhất.",
-    trustBulletLeadTime: "Lịch đặt trước theo độ phức tạp món (1-3 ngày)",
-    trustBulletDelivery: "Kiểm tra phạm vi giao hàng, ngoài vùng sẽ chuyển sang nhận tại cửa hàng",
-    trustBulletPayment: "Hỗ trợ thanh toán thủ công khi mở bán: tiền mặt, Zelle, Venmo",
+      "Rau Om vận hành như dịch vụ bếp gia đình nấu theo đợt. Khách đặt món từ thứ Hai đến thứ Sáu, bếp nấu thứ Bảy và giao trong ngày thứ Bảy.",
+    trustBulletLeadTime: "Ưu đãi đặt sớm: giảm 10% vào thứ Hai, giảm 5% vào thứ Ba/Thứ Tư",
+    trustBulletDelivery: "Giữ một số món cố định, đồng thời xoay vòng món mới mỗi tuần",
+    trustBulletPayment: "Có combo bữa ăn để giảm tải nấu nướng trong tuần",
     readFlow: "Xem quy trình đặt món đầy đủ",
   },
   newsletter: {
@@ -465,7 +507,7 @@ const VI_MESSAGES: SiteMessages = {
   checkoutPage: {
     title: "Thanh toán",
     intro:
-      "Chính sách nấu tươi được áp dụng: tất cả đơn được nấu sau khi xác nhận. Khung giờ hợp lệ sẽ theo thời gian đặt trước và thời gian đệm xác nhận thanh toán.",
+      "Áp dụng mô hình nấu theo đợt hằng tuần: đặt món từ thứ Hai đến thứ Sáu và nhận/giao vào thứ Bảy. Ưu đãi đặt sớm sẽ tự động tính theo ngày đặt.",
   },
   checkout: {
     empty: "Giỏ hàng đang trống. Hãy thêm món trước.",
@@ -499,7 +541,7 @@ const VI_MESSAGES: SiteMessages = {
     slot: "Khung giờ nhận món",
     fulfillmentDate: "Ngày nhận món",
     slotPlaceholder: "Chọn khung giờ",
-    noSlotsForDate: "Không có khung giờ phù hợp cho ngày đã chọn.",
+    noSlotsForDate: "Hiện không có khung giờ hợp lệ. Chỉ nhận đơn thứ Hai-thứ Sáu cho lịch giao/nhận thứ Bảy.",
     paymentNotesTitle: "Thanh toán và ghi chú",
     paymentMethod: "Phương thức thanh toán",
     cash: "Tiền mặt",
@@ -509,12 +551,15 @@ const VI_MESSAGES: SiteMessages = {
     cashLimitNote: "Đơn trên $100 phải thanh toán bằng Zelle hoặc Venmo.",
     cashLimitError: "Đơn trên $100 phải dùng Zelle hoặc Venmo.",
     orderNotes: "Ghi chú đơn hàng",
+    orderWindowNote:
+      "Nhận đơn từ thứ Hai đến thứ Sáu. Bếp nấu theo đợt vào thứ Bảy và giao trong các khung giờ thứ Bảy.",
     turnstileToken: "Mã Turnstile (chỉ cần khi đã cấu hình Turnstile secret)",
     summaryTitle: "Tổng tạm tính",
     itemsTitle: "Món trong đơn",
     quantityLabel: "SL",
     cartSubtotal: "Tạm tính giỏ hàng",
     bulkDiscount: "Giảm giá số lượng",
+    earlyOrderDiscount: "Ưu đãi đặt sớm",
     subtotalAfterDiscount: "Tạm tính sau giảm giá",
     updatingEstimate: "Đang cập nhật tạm tính...",
     deliveryFee: "Phí giao hàng",
@@ -528,6 +573,16 @@ const VI_MESSAGES: SiteMessages = {
     waitingForConfirmationBody: "Đơn của bạn đã được gửi. Chúng tôi sẽ xác nhận trong thời gian sớm nhất.",
     orderNumberLabel: "Mã đơn hàng",
     status: "Trạng thái",
+    voteTitle: "Bình chọn món tuần tới",
+    votePrompt: "Chọn món bạn muốn có trong thực đơn xoay vòng tuần sau",
+    votePlaceholder: "Chưa chọn bình chọn",
+    voteOptionBunBoHue: "Bún bò Huế",
+    voteOptionComTam: "Cơm tấm sườn nướng",
+    voteOptionCaRiGa: "Cà ri gà",
+    voteOptionBanhMiChao: "Bánh mì chảo",
+    voteOptionOther: "Món khác (tự nhập)",
+    voteOtherLabel: "Món bạn đề xuất",
+    voteOtherPlaceholder: "Ví dụ: Bún riêu hoặc Mì Quảng",
     submit: "Gửi đơn",
     submitting: "Đang gửi...",
   },
@@ -554,12 +609,12 @@ const VI_MESSAGES: SiteMessages = {
   },
   howOrdering: {
     title: "Cách đặt món",
-    step1: "Xem món và thêm vào giỏ hàng.",
-    step2: "Chọn giao hàng hoặc nhận tại cửa hàng và chọn khung giờ hợp lệ.",
-    step3: "Hệ thống kiểm tra thời gian đặt trước, sức chứa, khoảng cách và thuế.",
-    step4: "Gửi đơn với phương thức thanh toán thủ công (tiền mặt, Zelle, Venmo).",
-    step5: "Đơn vào trạng thái chờ xác nhận, bếp bắt đầu sau khi xác nhận.",
-    note: "Mặc định đặt trước tối thiểu 1 ngày, một số món cần 2-3 ngày.",
+    step1: "Xem món cố định, món xoay vòng và các combo tuần rồi thêm vào giỏ hàng.",
+    step2: "Đặt món trong khoảng thứ Hai đến thứ Sáu và chọn khung giờ giao/nhận thứ Bảy.",
+    step3: "Hệ thống tính ưu đãi số lượng, ưu đãi đặt sớm, phí giao hàng và thuế.",
+    step4: "Gửi đơn, chọn phương thức thanh toán và có thể bình chọn món cho tuần sau.",
+    step5: "Bếp nấu theo đợt vào thứ Bảy, sau đó giao trong các khung giờ thứ Bảy.",
+    note: "Chính sách ưu đãi đặt sớm: thứ Hai 10%, thứ Ba/Thứ Tư 5%, thứ Năm/Thứ Sáu 0%.",
   },
   allergens: {
     title: "Cảnh báo dị ứng",
@@ -578,13 +633,14 @@ const VI_MESSAGES: SiteMessages = {
     pickupFallback: "Nếu không giao được, bạn vẫn có thể nhận tại cửa hàng.",
   },
   freshCook: {
-    title: "Chính sách nấu tươi và đặt trước",
+    title: "Chính sách nấu theo đợt hằng tuần",
     paragraph:
-      "Rau Om nấu món sau khi xác nhận đơn. Chúng tôi không nấu hàng loạt để giao ngay.",
-    bullet1: "Đặt trước tối thiểu mặc định: 1 ngày",
-    bullet2: "Một số món cần 2 hoặc 3 ngày",
-    bullet3: "Cần xác nhận thanh toán trước khung giờ phục vụ",
-    closing: "Chính sách này giúp bảo đảm chất lượng nguyên liệu, an toàn thực phẩm và nhịp bếp.",
+      "Rau Om vận hành theo nhịp bếp gia đình nấu theo đợt mỗi tuần thay vì nấu giao ngay hằng ngày.",
+    bullet1: "Thời gian nhận đơn: thứ Hai đến thứ Sáu",
+    bullet2: "Ngày nấu chính của bếp: thứ Bảy",
+    bullet3: "Khung giao hàng: chỉ trong ngày thứ Bảy",
+    closing:
+      "Nhịp vận hành này giúp giảm áp lực cho bếp, chuẩn bị nguyên liệu tốt hơn và giữ chất lượng ổn định.",
   },
 };
 

@@ -21,6 +21,8 @@ interface EstimateResponse {
   totalItemQuantity: number;
   subtotalCents: number;
   bulkDiscountCents: number;
+  earlyOrderDiscountCents: number;
+  earlyOrderDiscountPercent: number;
   subtotalAfterDiscountCents: number;
   deliveryFeeCents: number;
   taxAmountCents: number;
@@ -87,8 +89,10 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
     customerName: "",
     phone: "",
     paymentMethod: "cash",
+    nextWeekVote: "",
     notes: "",
   });
+  const [nextWeekVoteOther, setNextWeekVoteOther] = useState("");
 
   const cartPayload = useMemo(
     () => items.map((item) => ({ dishId: item.dishId, quantity: item.quantity })),
@@ -335,6 +339,10 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
     setSuccess(null);
 
     const normalizedPhone = formatPhoneNumber(formValues.phone);
+    const normalizedVote =
+      formValues.nextWeekVote === "other"
+        ? nextWeekVoteOther.trim()
+        : formValues.nextWeekVote.trim();
 
     if (toPhoneDigits(normalizedPhone).length !== 10) {
       setError(t.checkout.invalidPhone);
@@ -379,6 +387,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
           fulfillmentType: selectedFulfillment,
           timeslotId: selectedTimeslot,
           paymentMethod: formValues.paymentMethod,
+          nextWeekVote: normalizedVote || undefined,
           notes: formValues.notes || undefined,
           idempotencyKey: nanoid(24),
           items: cartPayload,
@@ -489,6 +498,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
         <div className="checkout-summary-grid">
           <div className="checkout-summary-col checkout-summary-col-fulfillment">
             <div className="checkout-fulfillment-inline">
+              <p className="checkout-window-note">{t.checkout.orderWindowNote}</p>
               <label>
                 {t.checkout.fulfillmentTitle}
                 <select
@@ -596,7 +606,7 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                         </option>
                       ))}
                     </select>
-                    {selectedDate && filteredTimeslots.length === 0 ? (
+                    {availableDates.length === 0 || (selectedDate && filteredTimeslots.length === 0) ? (
                       <small>{t.checkout.noSlotsForDate}</small>
                     ) : null}
                   </label>
@@ -678,7 +688,16 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
                     <strong>-{formatCurrency(estimate.bulkDiscountCents)}</strong>
                   </p>
                 )}
-                {estimate.bulkDiscountCents > 0 && (
+                {estimate.earlyOrderDiscountCents > 0 && (
+                  <p>
+                    {t.checkout.earlyOrderDiscount}:{" "}
+                    <strong>
+                      -{formatCurrency(estimate.earlyOrderDiscountCents)} (
+                      {estimate.earlyOrderDiscountPercent}%)
+                    </strong>
+                  </p>
+                )}
+                {(estimate.bulkDiscountCents > 0 || estimate.earlyOrderDiscountCents > 0) && (
                   <p>
                     {t.checkout.subtotalAfterDiscount}:{" "}
                     <strong>{formatCurrency(estimate.subtotalAfterDiscountCents)}</strong>
@@ -709,6 +728,41 @@ export function CheckoutForm({ locale }: { locale: Locale }) {
             )}
           </div>
         </div>
+      </section>
+
+      <section className="checkout-section">
+        <h2>{t.checkout.voteTitle}</h2>
+        <label>
+          {t.checkout.votePrompt}
+          <select
+            value={formValues.nextWeekVote}
+            onChange={(event) => {
+              const nextVote = event.target.value;
+              setFormValues((current) => ({ ...current, nextWeekVote: nextVote }));
+              if (nextVote !== "other") {
+                setNextWeekVoteOther("");
+              }
+            }}
+          >
+            <option value="">{t.checkout.votePlaceholder}</option>
+            <option value={t.checkout.voteOptionBunBoHue}>{t.checkout.voteOptionBunBoHue}</option>
+            <option value={t.checkout.voteOptionComTam}>{t.checkout.voteOptionComTam}</option>
+            <option value={t.checkout.voteOptionCaRiGa}>{t.checkout.voteOptionCaRiGa}</option>
+            <option value={t.checkout.voteOptionBanhMiChao}>{t.checkout.voteOptionBanhMiChao}</option>
+            <option value="other">{t.checkout.voteOptionOther}</option>
+          </select>
+        </label>
+
+        {formValues.nextWeekVote === "other" && (
+          <label>
+            {t.checkout.voteOtherLabel}
+            <input
+              value={nextWeekVoteOther}
+              onChange={(event) => setNextWeekVoteOther(event.target.value)}
+              placeholder={t.checkout.voteOtherPlaceholder}
+            />
+          </label>
+        )}
       </section>
 
       {error && <p className="form-error">{error}</p>}

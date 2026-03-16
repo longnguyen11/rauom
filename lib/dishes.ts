@@ -19,6 +19,7 @@ interface DishRow {
   status: Dish["status"];
   lead_time_days: number;
   is_featured_week: number;
+  is_anchor_dish: number;
   available_from_utc: string | null;
   available_to_utc: string | null;
   created_at_utc: string;
@@ -147,6 +148,7 @@ function mapDishRows(
       status: row.status,
       leadTimeDays: row.lead_time_days,
       isFeaturedWeek: row.is_featured_week === 1,
+      isAnchorDish: row.is_anchor_dish === 1,
       availableFromUtc: row.available_from_utc,
       availableToUtc: row.available_to_utc,
       createdAtUtc: row.created_at_utc,
@@ -194,6 +196,38 @@ function localizeDish(dish: Dish, locale?: Locale): Dish {
   };
 }
 
+function applyWeeklyMenuFallbacks(
+  source: Dish[],
+  includeBundleFallback: boolean,
+): Dish[] {
+  const withAnchorFallback = source.some((dish) => dish.isAnchorDish)
+    ? source
+    : source.map((dish) => ({
+        ...dish,
+        isAnchorDish:
+          dish.slug === "pho" || dish.slug === "pho-chay" || dish.slug === "goi-cuon",
+      }));
+
+  if (!includeBundleFallback) {
+    return withAnchorFallback;
+  }
+
+  const fallbackBundles = MOCK_DISHES.filter(
+    (dish) => dish.status === "live" && dish.category === "bundle",
+  );
+
+  if (withAnchorFallback.some((dish) => dish.category === "bundle")) {
+    return withAnchorFallback;
+  }
+
+  return [
+    ...withAnchorFallback,
+    ...fallbackBundles.filter(
+      (bundle) => !withAnchorFallback.some((dish) => dish.id === bundle.id),
+    ),
+  ];
+}
+
 async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
   const placeholders = statuses.map(() => "?").join(", ");
   let dishRows: DishRow[] = [];
@@ -215,6 +249,7 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
         status,
         lead_time_days,
         is_featured_week,
+        is_anchor_dish,
         available_from_utc,
         available_to_utc,
         created_at_utc,
@@ -243,6 +278,7 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
           status,
           lead_time_days,
           is_featured_week,
+          0 AS is_anchor_dish,
           available_from_utc,
           available_to_utc,
           created_at_utc,
@@ -270,6 +306,7 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
           status,
           lead_time_days,
           is_featured_week,
+          0 AS is_anchor_dish,
           available_from_utc,
           available_to_utc,
           created_at_utc,
@@ -322,7 +359,10 @@ async function loadDishesFromDb(statuses: Dish["status"][]): Promise<Dish[]> {
 
 export async function listLiveDishes(tagCode?: string, locale?: Locale): Promise<Dish[]> {
   const dbDishes = await loadDishesFromDb(["live"]);
-  const source = dbDishes.length > 0 ? dbDishes : MOCK_DISHES.filter((dish) => dish.status === "live");
+  const usingDbSource = dbDishes.length > 0;
+  const baseSource =
+    usingDbSource ? dbDishes : MOCK_DISHES.filter((dish) => dish.status === "live");
+  const source = applyWeeklyMenuFallbacks(baseSource, !usingDbSource);
 
   const filtered = tagCode
     ? source.filter((dish) => dish.dietaryTags.some((tag) => tag.code === tagCode))
@@ -348,7 +388,9 @@ export async function listArchivedDishes(locale?: Locale): Promise<Dish[]> {
 export async function getDishBySlug(slug: string, locale?: Locale): Promise<Dish | null> {
   const liveAndArchived = await loadDishesFromDb(["live", "archived", "sold_out"]);
   if (liveAndArchived.length > 0) {
-    const dish = liveAndArchived.find((entry) => entry.slug === slug) ?? null;
+    const dish =
+      applyWeeklyMenuFallbacks(liveAndArchived, false).find((entry) => entry.slug === slug) ??
+      null;
     return dish && locale ? localizeDish(dish, locale) : dish;
   }
 
@@ -369,6 +411,7 @@ interface UpsertDishInput {
   priceCents: number;
   leadTimeDays: 1 | 2 | 3;
   status: Dish["status"];
+  isAnchorDish?: boolean;
   imageUrl?: string;
   imageAltText?: string;
   ingredients?: Array<{
@@ -379,6 +422,15 @@ interface UpsertDishInput {
 
 export async function upsertDish(input: UpsertDishInput): Promise<void> {
   const id = input.id ?? `dish_${crypto.randomUUID()}`;
+  const resolvedIsAnchorDish =
+    typeof input.isAnchorDish === "boolean"
+      ? input.isAnchorDish
+      : (
+          await dbFirst<{ is_anchor_dish: number }>(
+            `SELECT is_anchor_dish FROM dishes WHERE id = ? LIMIT 1`,
+            [id],
+          )
+        )?.is_anchor_dish === 1;
   const bulkDiscountTiersJson = JSON.stringify(
     normalizeDishBulkDiscountTiers(input.bulkDiscountTiers),
   );
@@ -400,9 +452,10 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         status,
         lead_time_days,
         is_featured_week,
+        is_anchor_dish,
         created_at_utc,
         updated_at_utc
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'USD', ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
         slug = excluded.slug,
         name = excluded.name,
@@ -415,6 +468,7 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         price_cents = excluded.price_cents,
         status = excluded.status,
         lead_time_days = excluded.lead_time_days,
+        is_anchor_dish = excluded.is_anchor_dish,
         updated_at_utc = CURRENT_TIMESTAMP`,
       [
         id,
@@ -429,6 +483,7 @@ export async function upsertDish(input: UpsertDishInput): Promise<void> {
         input.priceCents,
         input.status,
         input.leadTimeDays,
+        resolvedIsAnchorDish ? 1 : 0,
       ],
     );
   } catch {
@@ -615,7 +670,10 @@ export async function mapDishesById(dishIds: string[]): Promise<Map<string, Dish
   }
 
   const allLive = await loadDishesFromDb(["live", "sold_out", "archived"]);
-  const source = allLive.length > 0 ? allLive : MOCK_DISHES;
+  const source = applyWeeklyMenuFallbacks(
+    allLive.length > 0 ? allLive : MOCK_DISHES,
+    allLive.length === 0,
+  );
 
   const result = new Map<string, Dish>();
   for (const dish of source) {
@@ -629,7 +687,7 @@ export async function mapDishesById(dishIds: string[]): Promise<Map<string, Dish
 
 export async function mapDishesBySlug(): Promise<Map<string, Dish>> {
   const all = await loadDishesFromDb(["live", "sold_out", "archived"]);
-  const source = all.length > 0 ? all : MOCK_DISHES;
+  const source = applyWeeklyMenuFallbacks(all.length > 0 ? all : MOCK_DISHES, all.length === 0);
 
   return new Map(source.map((dish) => [dish.slug, dish]));
 }

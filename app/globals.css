@@ -489,6 +489,18 @@ main {
   font-weight: 700;
 }
 
+.tag-pill-bundle {
+  background: rgba(11, 147, 212, 0.2);
+  border-color: rgba(11, 147, 212, 0.4);
+  color: #0e4f70;
+}
+
+.tag-pill-anchor {
+  background: rgba(127, 174, 83, 0.22);
+  border-color: rgba(78, 122, 49, 0.45);
+  color: #2f5c1d;
+}
+
 .dish-actions {
   display: flex;
   gap: 0.5rem;
@@ -864,6 +876,13 @@ main {
   border-radius: 12px;
   padding: 0.75rem;
   background: #fffdf9;
+}
+
+.checkout-window-note {
+  margin: 0;
+  color: #2f5c1d;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .checkout-address-autocomplete {
