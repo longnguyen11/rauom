@@ -16,7 +16,7 @@ function isAllowedApiPath(pathname: string): boolean {
   return pathname === "/api/locale" || pathname.startsWith("/api/menu-settings");
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isAllowedAssetPath(pathname) || isAllowedApiPath(pathname)) {
