@@ -5,10 +5,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: ["/admin", "/api/admin"],
+        allow: ["/menu", "/menu-assets"],
+        disallow: ["/", "/admin", "/api", "/checkout", "/dishes"],
       },
     ],
-    sitemap: "https://rau-om.example.com/sitemap.xml",
+    sitemap: "https://rau-om.caycham1.workers.dev/sitemap.xml",
   };
 }

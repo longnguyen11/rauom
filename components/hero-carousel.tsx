@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type { Dish } from "@/lib/types";
-import { formatCurrency } from "@/lib/format";
 import { getMessages, type Locale } from "@/lib/i18n-dictionary";
+import { formatDishUnitPrice } from "@/lib/menu-pricing";
 
 export function HeroCarousel({ dishes, locale }: { dishes: Dish[]; locale: Locale }) {
   const [index, setIndex] = useState(0);
@@ -32,6 +32,7 @@ export function HeroCarousel({ dishes, locale }: { dishes: Dish[]; locale: Local
   const image =
     activeDish.images[0]?.url ??
     "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=1600&q=80";
+  const menuCta = locale === "vi" ? "Xem thuc don" : "Order from menu";
 
   return (
     <section className="hero-carousel" aria-label={t.hero.sectionAria}>
@@ -48,13 +49,22 @@ export function HeroCarousel({ dishes, locale }: { dishes: Dish[]; locale: Local
 
       <div className="hero-overlay">
         <p className="eyebrow">{t.hero.eyebrow}</p>
-        <h1>{activeDish.name}</h1>
+        <h2>{activeDish.name}</h2>
         <p>{activeDish.shortDescription}</p>
         <div className="hero-actions">
-          <Link href={`/dishes/${activeDish.slug}`} className="btn-primary">
+          <Link href="#menu" className="btn-primary">
+            {menuCta}
+          </Link>
+          <Link href={`/dishes/${activeDish.slug}`} className="btn-secondary hero-secondary-link">
             {t.common.viewDetails}
           </Link>
-          <span className="hero-price">{formatCurrency(activeDish.priceCents)}</span>
+          <span className="hero-price">
+            {formatDishUnitPrice({
+              priceCents: activeDish.priceCents,
+              currency: activeDish.currency,
+              slug: activeDish.slug,
+            })}
+          </span>
         </div>
 
         <div className="carousel-dots" role="tablist" aria-label={t.hero.controlsAria}>

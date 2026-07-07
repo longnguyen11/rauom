@@ -4,11 +4,12 @@
   MIN_LEAD_TIME_DAYS_DEFAULT,
 } from "@/lib/constants";
 import { readAppRuntimeConfig } from "@/lib/cloudflare";
-import { dbAll, dbFirst } from "@/lib/db";
+import { dbAll, dbFirst, requireDb } from "@/lib/db";
 import {
   DEFAULT_DELIVERY_PRICING_RULE,
   type DeliveryPricingRule,
 } from "@/lib/pricing";
+import type { BlackoutDate } from "@/lib/types";
 
 interface AppSettingRow {
   key: string;
@@ -28,6 +29,13 @@ interface DeliveryRuleRow {
 
 interface TaxRuleRow {
   tax_rate_bps: number;
+}
+
+interface BlackoutDateRow {
+  id: string;
+  date_local: string;
+  reason: string | null;
+  is_active: number;
 }
 
 export async function getAppSetting<T>(key: string): Promise<T | null> {
@@ -123,4 +131,72 @@ export async function getBlackoutDateSet(): Promise<Set<string>> {
   );
 
   return new Set(rows.map((row) => row.date_local));
+}
+
+function mapBlackoutDate(row: BlackoutDateRow): BlackoutDate {
+  return {
+    id: row.id,
+    dateLocal: row.date_local,
+    reason: row.reason,
+    isActive: row.is_active === 1,
+  };
+}
+
+export async function listBlackoutDates(activeOnly = true): Promise<BlackoutDate[]> {
+  const rows = await dbAll<BlackoutDateRow>(
+    `SELECT id, date_local, reason, is_active
+    FROM blackout_dates
+    WHERE (? = 0 OR is_active = 1)
+    ORDER BY date_local ASC`,
+    [activeOnly ? 1 : 0],
+  );
+
+  return rows.map(mapBlackoutDate);
+}
+
+export async function blockOutDate(input: {
+  dateLocal: string;
+  reason?: string;
+}): Promise<BlackoutDate> {
+  const db = requireDb();
+  const reason = input.reason?.trim() || null;
+  const id = `blackout_${input.dateLocal}`;
+
+  await db
+    .prepare(
+      `INSERT INTO blackout_dates (id, date_local, reason, is_active)
+      VALUES (?, ?, ?, 1)
+      ON CONFLICT(date_local) DO UPDATE SET
+        reason = excluded.reason,
+        is_active = 1`,
+    )
+    .bind(id, input.dateLocal, reason)
+    .run();
+
+  const rows = await dbAll<BlackoutDateRow>(
+    `SELECT id, date_local, reason, is_active
+    FROM blackout_dates
+    WHERE date_local = ?
+    LIMIT 1`,
+    [input.dateLocal],
+  );
+
+  const row = rows[0];
+  if (!row) {
+    throw new Error("Could not block out date.");
+  }
+
+  return mapBlackoutDate(row);
+}
+
+export async function unblockDate(dateLocal: string): Promise<void> {
+  const db = requireDb();
+  await db
+    .prepare(
+      `UPDATE blackout_dates
+      SET is_active = 0
+      WHERE date_local = ?`,
+    )
+    .bind(dateLocal)
+    .run();
 }

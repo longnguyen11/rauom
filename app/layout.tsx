@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Fraunces, Manrope } from "next/font/google";
 
 import { CartFab } from "@/components/cart-fab";
@@ -22,14 +23,14 @@ const bodyFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} | Weekly Batch-Cooked Vietnamese Home Meals`,
+  title: `${BRAND_NAME} Menu | Vietnamese Cuisine`,
   description:
-    "Order Monday-Friday from Rau Om's weekly menu, then receive Saturday batch-cooked Vietnamese home meals in Orlando.",
-  metadataBase: new URL("https://rau-om.example.com"),
+    "View the Rau Om Vietnamese cuisine menu with mainstay dishes and current temporary dishes.",
+  metadataBase: new URL("https://rau-om.caycham1.workers.dev"),
   openGraph: {
-    title: `${BRAND_NAME} | Weekly Batch-Cooked Vietnamese Home Meals`,
+    title: `${BRAND_NAME} Menu | Vietnamese Cuisine`,
     description:
-      "Weekly batch-cooked Vietnamese home meals in Orlando with Saturday fulfillment and early-order discounts.",
+      "Current Rau Om menu with mainstay dishes and temporary weekly dishes.",
     type: "website",
   },
 };
@@ -39,7 +40,19 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerStore = await headers();
+  const useMenuShell = headerStore.get("x-rauom-menu-shell") === "1";
   const { locale, messages } = await getCurrentMessages();
+
+  if (useMenuShell) {
+    return (
+      <html lang={locale}>
+        <body className={`${headingFont.variable} ${bodyFont.variable}`}>
+          {children}
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang={locale}>

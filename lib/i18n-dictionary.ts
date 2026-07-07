@@ -1,6 +1,6 @@
 ﻿export type Locale = "en" | "vi";
 
-export const DEFAULT_LOCALE: Locale = "vi";
+export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE_NAME = "rauom_locale";
 
 export interface SiteMessages {
@@ -218,7 +218,7 @@ const EN_MESSAGES: SiteMessages = {
     mainNavigationAria: "Main navigation",
     brandAria: "Rau Om homepage",
     footerLine:
-      "Rau Om | 720 Orange Ave, Longwood, FL 32750 | Weekly batch cooking with Saturday delivery windows",
+      "Rau Om | Orlando-area Vietnamese home cooking | Pickup is free, delivery fees are calculated at checkout",
     footerAllergens: "Allergens",
     footerDeliveryFees: "Delivery Fees",
     footerFreshCook: "Batch-Cook Policy",
@@ -237,7 +237,7 @@ const EN_MESSAGES: SiteMessages = {
   },
   cart: {
     buttonLabel: "Cart",
-    openAria: "Open cart",
+    openAria: "Go to checkout",
     drawerAria: "Shopping cart",
     title: "Your Cart",
     close: "Close",
@@ -255,9 +255,9 @@ const EN_MESSAGES: SiteMessages = {
     showDishPrefix: "Show",
   },
   dishGrid: {
-    title: "Browse Dishes",
+    title: "Menu",
     subtitle:
-      "Batch-cooking model: order Monday-Friday, we cook on Saturday, then deliver Saturday windows.",
+      "Choose dishes, set quantities, and review pickup or delivery options at checkout.",
     filterAria: "Filter dishes by dietary tags",
     all: "All",
     bundleMeals: "Bundle Meals",
@@ -269,12 +269,12 @@ const EN_MESSAGES: SiteMessages = {
     bulkDiscountNone: "No bulk discount",
   },
   home: {
-    trustTitle: "Weekly Batch-Cook Promise",
+    trustTitle: "Vietnamese Home-Cooked Meals",
     trustBody:
-      "Rau Om is a home-cook batch service. Customers place orders Monday through Friday, kitchen prep happens Saturday, and delivery runs Saturday windows.",
-    trustBulletLeadTime: "Early-order incentives: 10% off Monday, 5% off Tuesday/Wednesday",
-    trustBulletDelivery: "Anchor dishes stay on the menu while rotating dishes change weekly",
-    trustBulletPayment: "Bundle meals are available for families and weekly meal prep",
+      "Browse the current menu, add dishes by quantity, then choose free pickup or paid delivery. Saturday and Sunday are normal batch fulfillment days; larger orders can request other days.",
+    trustBulletLeadTime: "Each dish lists price, ingredients, and allergy warnings.",
+    trustBulletDelivery: "Free pickup is available at Long Van Temple, Phap Vu Temple, or Fancy Fruit in Longwood.",
+    trustBulletPayment: "Orders above $50 require advance payment by Zelle or Venmo.",
     readFlow: "Read the full ordering flow",
   },
   newsletter: {
@@ -290,7 +290,7 @@ const EN_MESSAGES: SiteMessages = {
   checkoutPage: {
     title: "Checkout",
     intro:
-      "Weekly batch policy applies: orders open Monday-Friday and are fulfilled on Saturday. Early-order discounts are applied automatically based on order day.",
+      "Review your quantities, choose pickup or delivery, select a date, and submit your order. Orders above $50 require advance payment by Zelle or Venmo.",
   },
   checkout: {
     empty: "Your cart is empty. Add dishes first.",
@@ -324,18 +324,18 @@ const EN_MESSAGES: SiteMessages = {
     slot: "Fulfillment slot",
     fulfillmentDate: "Fulfillment date",
     slotPlaceholder: "Select a slot",
-    noSlotsForDate: "No eligible slots right now. Orders open Monday-Friday for Saturday fulfillment.",
+    noSlotsForDate: "Choose a pickup or delivery date.",
     paymentNotesTitle: "Payment and Notes",
     paymentMethod: "Payment method",
     cash: "Cash",
     zelle: "Zelle",
     venmo: "Venmo",
-    cashDisabledOver100: "disabled for orders over $100",
-    cashLimitNote: "Orders above $100 must be paid with Zelle or Venmo.",
-    cashLimitError: "Orders above $100 must use Zelle or Venmo.",
+    cashDisabledOver100: "disabled for orders over $50",
+    cashLimitNote: "Orders above $50 must be paid with Zelle or Venmo.",
+    cashLimitError: "Orders above $50 must use Zelle or Venmo.",
     orderNotes: "Order notes",
     orderWindowNote:
-      "Ordering is open Monday-Friday. Kitchen cooks in one Saturday batch and delivers Saturday windows.",
+      "Saturday and Sunday are normal pickup/delivery days. Monday-Friday requests require an order above $50.",
     turnstileToken: "Turnstile token (required only when Turnstile secret is configured)",
     summaryTitle: "Estimated total",
     itemsTitle: "Order items",
@@ -392,12 +392,12 @@ const EN_MESSAGES: SiteMessages = {
   },
   howOrdering: {
     title: "How Ordering Works",
-    step1: "Browse anchor dishes, rotating weekly dishes, and bundle meals.",
-    step2: "Place your order Monday through Friday and choose your Saturday fulfillment slot.",
-    step3: "Checkout applies bulk rules, early-order discount, delivery fee, and tax estimate.",
-    step4: "Submit payment details and optionally vote for next week's rotating dish.",
-    step5: "Kitchen batch-cooks on Saturday, then deliveries go out in Saturday windows.",
-    note: "Early-order discount policy: Monday 10%, Tuesday/Wednesday 5%, Thursday/Friday 0%.",
+    step1: "Browse the menu. Each dish shows price, description, ingredients, and allergy warnings.",
+    step2: "Choose quantities and add dishes to your cart.",
+    step3: "At checkout, choose pickup or delivery, then select your requested date.",
+    step4: "Free pickup options are Long Van Temple on Saturday, Phap Vu Temple on Sunday, or Fancy Fruit in Longwood by agreed time.",
+    step5: "Orders above $50 require advance payment by Zelle or Venmo. Include the order number in the payment memo.",
+    note: "Saturday and Sunday are normal pickup/delivery days. Monday-Friday requests are only available when the order is above $50.",
   },
   allergens: {
     title: "Allergens Disclosure",
@@ -416,14 +416,14 @@ const EN_MESSAGES: SiteMessages = {
     pickupFallback: "If delivery is unavailable, pickup remains available at checkout.",
   },
   freshCook: {
-    title: "Weekly Batch-Cooking Policy",
+    title: "Batch Fulfillment Policy",
     paragraph:
-      "Rau Om runs a weekly home-kitchen batch cycle instead of daily cook-to-order dispatch.",
-    bullet1: "Order window: Monday through Friday",
-    bullet2: "Kitchen cook day: Saturday",
-    bullet3: "Delivery window: Saturday slots only",
+      "Rau Om keeps fulfillment simple so the kitchen can plan reliably and keep food quality consistent.",
+    bullet1: "Saturday and Sunday are the normal batch pickup/delivery days.",
+    bullet2: "Pickup is free at the available pickup locations.",
+    bullet3: "Delivery fees are calculated from the delivery address at checkout.",
     closing:
-      "This rhythm helps reduce kitchen stress, improves prep planning, and keeps quality consistent.",
+      "Monday-Friday requests are available only for orders above $50 and may require follow-up confirmation.",
   },
 };
 

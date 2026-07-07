@@ -5,30 +5,11 @@ import { notFound } from "next/navigation";
 
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { getDishBySlug, mapDishesBySlug } from "@/lib/dishes";
-import { formatCurrency } from "@/lib/format";
 import { getCurrentMessages } from "@/lib/i18n";
-import type { DishBulkDiscountTier } from "@/lib/types";
+import { formatDishUnitPrice, getDishRequiredLeadTimeDays } from "@/lib/menu-pricing";
 
 interface DishPageProps {
   params: Promise<{ slug: string }>;
-}
-
-function formatDishBulkDiscountLine(
-  tiers: DishBulkDiscountTier[],
-  locale: "en" | "vi",
-): string[] {
-  if (tiers.length === 0) {
-    return [];
-  }
-
-  return tiers
-    .slice()
-    .sort((a, b) => a.minQuantity - b.minQuantity)
-    .map((tier) =>
-      locale === "vi"
-        ? `Từ ${tier.minQuantity} phần giảm ${tier.discountPercent}%`
-        : `${tier.minQuantity}+ servings save ${tier.discountPercent}%`,
-    );
 }
 
 export async function generateMetadata({ params }: DishPageProps): Promise<Metadata> {
@@ -71,6 +52,7 @@ export default async function DishPage({ params }: DishPageProps) {
   const image =
     dish.images[0]?.url ??
     "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=1400&q=80";
+  const requiredLeadTimeDays = getDishRequiredLeadTimeDays(dish.slug);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -115,34 +97,26 @@ export default async function DishPage({ params }: DishPageProps) {
 
         <div style={{ display: "grid", gap: "0.8rem", alignContent: "start" }}>
           <p>
-            <strong>{formatCurrency(dish.priceCents)}</strong>
+            <strong>
+              {formatDishUnitPrice({
+                priceCents: dish.priceCents,
+                currency: dish.currency,
+                slug: dish.slug,
+              })}
+            </strong>
           </p>
           <p>{dish.longDescription}</p>
-          {(dish.category === "bundle" || dish.isAnchorDish) && (
+          {dish.isAnchorDish && (
             <ul className="tag-row">
-              {dish.category === "bundle" && (
-                <li className="tag-pill tag-pill-bundle">{messages.dishGrid.bundleMealBadge}</li>
-              )}
-              {dish.isAnchorDish && (
-                <li className="tag-pill tag-pill-anchor">{messages.dishGrid.anchorDishBadge}</li>
-              )}
+              <li className="tag-pill tag-pill-anchor">{messages.dishGrid.anchorDishBadge}</li>
             </ul>
           )}
-          <p>
-            <strong>{messages.dishPage.leadTime}:</strong> {dish.leadTimeDays} {messages.common.daySuffix}
-          </p>
-          <div className="dish-bulk-discount-line">
-            <strong>{messages.dishGrid.bulkDiscountLabel}:</strong>
-            {dish.bulkDiscountTiers.length > 0 ? (
-              <ul className="dish-bulk-discount-list">
-                {formatDishBulkDiscountLine(dish.bulkDiscountTiers, locale).map((line) => (
-                  <li key={`${dish.id}-${line}`}>{line}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>{messages.dishGrid.bulkDiscountNone}</p>
-            )}
-          </div>
+          {requiredLeadTimeDays > 0 ? (
+            <p>
+              <strong>{messages.dishPage.leadTime}:</strong> {requiredLeadTimeDays}{" "}
+              {messages.common.daySuffix}
+            </p>
+          ) : null}
 
           <div>
             <h2>{messages.dishPage.dietaryTags}</h2>

@@ -1,10 +1,28 @@
-﻿export function formatCurrency(cents: number, currency = "USD"): string {
+export function formatCurrency(cents: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(cents / 100);
+}
+
+export function formatCompactCurrency(cents: number, currency = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+}
+
+export function formatDateReadable(dateLocal: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(`${dateLocal}T12:00:00`));
 }
 
 export function formatMiles(distanceMiles: number): string {

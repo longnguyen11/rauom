@@ -2,6 +2,7 @@ export type DishStatus = "draft" | "scheduled" | "live" | "archived" | "sold_out
 export type DishCategory = "main" | "side" | "dessert" | "bundle";
 
 export type FulfillmentType = "delivery" | "pickup";
+export type PickupLocation = "long_van_temple" | "phap_vu_temple" | "fancy_fruit";
 
 export type PaymentMethod = "cash" | "zelle" | "venmo";
 
@@ -78,6 +79,13 @@ export interface Timeslot {
   minimumLeadTimeDays: number;
 }
 
+export interface BlackoutDate {
+  id: string;
+  dateLocal: string;
+  reason: string | null;
+  isActive: boolean;
+}
+
 export interface CartLineInput {
   dishId: string;
   quantity: number;
@@ -95,16 +103,20 @@ export interface CheckoutEstimateInput {
   fulfillmentType: FulfillmentType;
   items: CartLineInput[];
   deliveryAddress?: DeliveryAddress;
+  fulfillmentDateLocal?: string;
+  nonBatchDayRequested?: boolean;
+  pickupLocation?: PickupLocation;
+  pickupTimeLocal?: string;
 }
 
-export interface CheckoutSubmitInput extends CheckoutEstimateInput {
+export interface CheckoutSubmitInput
+  extends Omit<CheckoutEstimateInput, "fulfillmentDateLocal"> {
   customerName: string;
   email?: string;
   phone: string;
   notes?: string;
-  nextWeekVote?: string;
   paymentMethod: PaymentMethod;
-  timeslotId: string;
+  fulfillmentDateLocal: string;
   turnstileToken?: string;
   idempotencyKey: string;
 }
@@ -130,6 +142,7 @@ export interface OrderEstimate {
   taxRateBps: number;
   taxAmountCents: number;
   totalCents: number;
+  advancePaymentRequired: boolean;
   leadTimeDays: number;
   maxDishLeadTimeDays: number;
   notes: string[];
@@ -154,4 +167,18 @@ export interface AdminOrderSummary extends OrderSummary {
   paymentMethodSelected: PaymentMethod;
   paymentStatus: "unpaid" | "paid" | "refunded_partial" | "refunded_full";
   kitchenGroup: KitchenGroup;
+  notes: string | null;
+  deliveryAddress: DeliveryAddress | null;
+  deliveryDistanceMiles: number | null;
+  deliveryFeeCents: number;
+  taxAmountCents: number;
+  items: AdminOrderItem[];
+}
+
+export interface AdminOrderItem {
+  id: string;
+  dishId: string;
+  dishName: string;
+  unitPriceCents: number;
+  quantity: number;
 }

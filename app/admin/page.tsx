@@ -2,8 +2,8 @@
 
 import { AdminDashboard } from "@/components/admin-dashboard";
 import { isAdminAuthorizedForPage } from "@/lib/admin-auth";
-import { listAllDishesForAdmin } from "@/lib/dishes";
 import { listAdminOrders } from "@/lib/orders";
+import { listBlackoutDates } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +16,15 @@ export default async function AdminPage() {
   let orders:
     | Awaited<ReturnType<typeof listAdminOrders>>
     | null = null;
-  let dishes:
-    | Awaited<ReturnType<typeof listAllDishesForAdmin>>
+  let blackoutDates:
+    | Awaited<ReturnType<typeof listBlackoutDates>>
     | null = null;
   let setupError: string | null = null;
 
   try {
-    [orders, dishes] = await Promise.all([
+    [orders, blackoutDates] = await Promise.all([
       listAdminOrders(200),
-      listAllDishesForAdmin(),
+      listBlackoutDates(),
     ]);
   } catch (error) {
     setupError =
@@ -33,7 +33,7 @@ export default async function AdminPage() {
         : "Unknown admin initialization error.";
   }
 
-  if (setupError || !orders || !dishes) {
+  if (setupError || !orders || !blackoutDates) {
     return (
       <section className="page-prose">
         <h1>Admin Setup Error</h1>
@@ -55,10 +55,10 @@ export default async function AdminPage() {
     <section className="page-prose" style={{ background: "transparent", border: "0", padding: 0 }}>
       <h1>Admin</h1>
       <p>
-        Protect this route in production with Cloudflare Access policy and keep token
-        login only as fallback.
+        Order tracking only: calendar, due-date list, customer follow-up details,
+        and status updates.
       </p>
-      <AdminDashboard initialOrders={orders} initialDishes={dishes} />
+      <AdminDashboard initialOrders={orders} initialBlackoutDates={blackoutDates} />
     </section>
   );
 }

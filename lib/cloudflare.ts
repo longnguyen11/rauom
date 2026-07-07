@@ -24,6 +24,7 @@ export interface AppEnv {
   MAPBOX_ACCESS_TOKEN?: string;
   TURNSTILE_SECRET_KEY?: string;
   ADMIN_ACCESS_TOKEN?: string;
+  MENU_SETTINGS_PASSWORD?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
   RESEND_OWNER_EMAIL?: string;
