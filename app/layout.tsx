@@ -42,7 +42,7 @@ export default async function RootLayout({
 }>) {
   const headerStore = await headers();
   const useMenuShell = headerStore.get("x-rauom-menu-shell") === "1";
-  const { locale, messages } = await getCurrentMessages();
+  const { locale, messages } = await getCurrentMessages(useMenuShell ? "vi" : undefined);
 
   if (useMenuShell) {
     return (

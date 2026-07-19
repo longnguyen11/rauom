@@ -2154,6 +2154,34 @@ main {
   font-weight: 750;
 }
 
+.menu-made-to-order {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 0.95rem 0;
+  border-top: 1px solid rgba(49, 85, 31, 0.22);
+  border-bottom: 1px solid rgba(49, 85, 31, 0.22);
+}
+
+.menu-made-to-order p {
+  margin: 0;
+  color: #4d473d;
+  font-size: clamp(0.92rem, 1.7vw, 1.02rem);
+  font-weight: 720;
+  line-height: 1.6;
+}
+
+.menu-made-to-order strong {
+  color: #31551f;
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.menu-made-to-order-segment {
+  margin-left: 0.65rem;
+}
+
 .menu-settings-page {
   padding: clamp(1rem, 3vw, 2rem);
   background: #f6f0e6;
@@ -2364,5 +2392,11 @@ main {
 
   .menu-date-list dd {
     text-align: left;
+  }
+
+  .menu-made-to-order-segment {
+    display: block;
+    margin-left: 0;
+    margin-top: 0.45rem;
   }
 }

@@ -16,6 +16,9 @@ const MENU_TEXT = {
     deliveryDate: "Delivery date",
     orderDeadline: "Last day to order",
     contact: "Contact Ms. Ha: (832) 518-9699",
+    madeToOrderLabel: "Made to order",
+    temporaryAvailableLabel: "Temporary dishes",
+    temporaryUnavailable: "not available right now",
   },
   vi: {
     eyebrow: "Ẩm thực Việt",
@@ -27,6 +30,9 @@ const MENU_TEXT = {
     deliveryDate: "Ngày giao",
     orderDeadline: "Ngày cuối đặt món",
     contact: "Liên hệ chị Hà: (832) 518-9699",
+    madeToOrderLabel: "Các món làm theo đơn",
+    temporaryAvailableLabel: "Món tạm thời",
+    temporaryUnavailable: "hiện chưa có",
   },
 } as const;
 
@@ -40,10 +46,22 @@ function formatDate(dateKey: string, locale: "en" | "vi"): string {
 }
 
 export default async function MenuPage() {
-  const locale = await getCurrentLocale();
+  const locale = await getCurrentLocale("vi");
   const text = MENU_TEXT[locale];
   const menu = await getMenuData();
   const temporaryDishes = menu.temporaryDishes.filter((dish) => dish.isActive);
+  const madeToOrderLine = menu.mainstayDishes
+    .map((dish) => {
+      const copy = dish.copy[locale];
+      return `${copy.name} (${copy.price})`;
+    })
+    .join("; ");
+  const temporaryDishLine = temporaryDishes
+    .map((dish) => {
+      const copy = dish.copy[locale];
+      return `${copy.name} (${copy.price})`;
+    })
+    .join("; ");
 
   return (
     <main className="menu-public-page">
@@ -83,40 +101,52 @@ export default async function MenuPage() {
         </div>
       </section>
 
-      <section className="menu-section" aria-labelledby="temporary-menu-heading">
-        <div className="menu-section-heading">
-          <h2 id="temporary-menu-heading">{text.temporaryTitle}</h2>
-        </div>
-        <div className="menu-card-grid menu-card-grid-temporary">
-          {temporaryDishes.map((dish) => {
-            const copy = dish.copy[locale];
+      {temporaryDishes.length > 0 ? (
+        <section className="menu-section" aria-labelledby="temporary-menu-heading">
+          <div className="menu-section-heading">
+            <h2 id="temporary-menu-heading">{text.temporaryTitle}</h2>
+          </div>
+          <div className="menu-card-grid menu-card-grid-temporary">
+            {temporaryDishes.map((dish) => {
+              const copy = dish.copy[locale];
 
-            return (
-              <article className="menu-card menu-card-temporary" key={dish.id}>
-                <div className="menu-card-photo">
-                  <MenuDishImage src={dish.imageUrl} alt={copy.imageAlt} />
-                </div>
-                <div className="menu-card-body">
-                  <div className="menu-card-title-row">
-                    <h3>{copy.name}</h3>
-                    <strong>{copy.price}</strong>
+              return (
+                <article className="menu-card menu-card-temporary" key={dish.id}>
+                  <div className="menu-card-photo">
+                    <MenuDishImage src={dish.imageUrl} alt={copy.imageAlt} />
                   </div>
-                  <p>{copy.description}</p>
-                  <dl className="menu-date-list">
-                    <div>
-                      <dt>{text.deliveryDate}</dt>
-                      <dd>{formatDate(dish.deliveryDate, locale)}</dd>
+                  <div className="menu-card-body">
+                    <div className="menu-card-title-row">
+                      <h3>{copy.name}</h3>
+                      <strong>{copy.price}</strong>
                     </div>
-                    <div>
-                      <dt>{text.orderDeadline}</dt>
-                      <dd>{formatDate(dish.orderDeadline, locale)}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                    <p>{copy.description}</p>
+                    <dl className="menu-date-list">
+                      <div>
+                        <dt>{text.deliveryDate}</dt>
+                        <dd>{formatDate(dish.deliveryDate, locale)}</dd>
+                      </div>
+                      <div>
+                        <dt>{text.orderDeadline}</dt>
+                        <dd>{formatDate(dish.orderDeadline, locale)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="menu-made-to-order" aria-label={text.madeToOrderLabel}>
+        <p>
+          <strong>{text.madeToOrderLabel}:</strong> {madeToOrderLine}.
+          <span className="menu-made-to-order-segment">
+            <strong>{text.temporaryAvailableLabel}:</strong>{" "}
+            {temporaryDishLine || text.temporaryUnavailable}
+          </span>
+        </p>
       </section>
     </main>
   );
