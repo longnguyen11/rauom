@@ -67,6 +67,7 @@ export default async function MenuPage() {
           </a>
           <a className="menu-action" href="sms:+17147574768">
             {text.englishText}
+            <span>(714) 757-4768</span>
           </a>
         </div>
       </header>

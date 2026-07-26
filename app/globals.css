@@ -2486,7 +2486,7 @@ main {
 .menu-contact-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 1rem 2rem;
   margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
@@ -2494,13 +2494,13 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  border: 1px solid var(--menu-ink);
-  padding: 0.78rem 1rem;
+  padding: 0.45rem 0 0.55rem;
+  border-bottom: 1px solid var(--menu-line);
   color: var(--menu-ink);
   font-size: 0.78rem;
   font-weight: 700;
   text-decoration: none;
-  transition: background 160ms ease, color 160ms ease;
+  transition: border-color 160ms ease;
 }
 
 .menu-action span {
@@ -2510,8 +2510,7 @@ main {
 
 .menu-action:hover,
 .menu-action:focus-visible {
-  background: var(--menu-ink);
-  color: var(--menu-paper);
+  border-color: var(--menu-ink);
 }
 
 .menu-feature-section,
@@ -2797,10 +2796,12 @@ main {
   }
 
   .menu-contact-actions {
-    display: grid;
+    display: flex;
+    gap: 0.7rem 1.25rem;
   }
 
   .menu-action {
+    flex: 1 1 240px;
     justify-content: space-between;
   }
 
