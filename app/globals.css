@@ -2509,16 +2509,9 @@ main {
 }
 
 .menu-action:hover,
-.menu-action:focus-visible,
-.menu-action-primary {
+.menu-action:focus-visible {
   background: var(--menu-ink);
   color: var(--menu-paper);
-}
-
-.menu-action-text {
-  border-color: transparent;
-  text-decoration: underline;
-  text-underline-offset: 0.25em;
 }
 
 .menu-section-number {
@@ -2611,6 +2604,18 @@ main {
   color: #535c54;
   font-size: 0.98rem;
   line-height: 1.65;
+}
+
+.menu-availability {
+  margin: 0;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--menu-line);
+  border-bottom: 1px solid var(--menu-line);
+  color: var(--menu-leaf);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .menu-date-list {

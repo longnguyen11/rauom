@@ -6,16 +6,15 @@ export const dynamic = "force-dynamic";
 
 const MENU_TEXT = {
   en: {
-    eyebrow: "Orlando · Small-batch Vietnamese cooking",
+    eyebrow: "Orlando · Vietnamese cooking",
     title: "Rau Om",
     subtitle:
-      "Comforting Vietnamese dishes, thoughtfully prepared in small batches for pickup or delivery.",
+      "Comforting Vietnamese dishes, thoughtfully prepared for pickup or delivery.",
     mainstayTitle: "Always Available",
     mainstayIntro: "House favorites prepared to order.",
     temporaryTitle: "This Week at Rau Om",
     featuredLabel: "Weekly special",
-    deliveryDate: "Delivery date",
-    orderDeadline: "Order by",
+    availableDates: "Available 07/30 – 08/02",
     orderTitle: "Place an order",
     orderCopy: "Choose your dishes, then call or text us to confirm availability and fulfillment.",
     vietnameseCall: "Vietnamese · Call Ms. Ha",
@@ -23,16 +22,15 @@ const MENU_TEXT = {
     englishText: "English · Text",
   },
   vi: {
-    eyebrow: "Orlando · Món Việt nấu theo mẻ nhỏ",
+    eyebrow: "Orlando · Món Việt",
     title: "Rau Om",
     subtitle:
-      "Những món Việt thân thuộc được chuẩn bị chu đáo theo từng mẻ nhỏ, có pickup hoặc delivery.",
+      "Những món Việt thân thuộc được chuẩn bị chu đáo, có pickup hoặc delivery.",
     mainstayTitle: "Món Luôn Có",
     mainstayIntro: "Các món nhà làm được chuẩn bị theo đơn.",
     temporaryTitle: "Món Tuần Này",
     featuredLabel: "Món đặc biệt trong tuần",
-    deliveryDate: "Ngày giao",
-    orderDeadline: "Đặt trước ngày",
+    availableDates: "Có từ 07/30 – 08/02",
     orderTitle: "Đặt món",
     orderCopy: "Chọn món, sau đó gọi hoặc nhắn tin để xác nhận món và cách nhận hàng.",
     vietnameseCall: "Tiếng Việt · Gọi chị Hà",
@@ -40,15 +38,6 @@ const MENU_TEXT = {
     englishText: "English · Text",
   },
 } as const;
-
-function formatDate(dateKey: string, locale: "en" | "vi"): string {
-  return new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(`${dateKey}T12:00:00`));
-}
 
 export default async function MenuPage() {
   const locale = await getCurrentLocale("vi");
@@ -68,7 +57,7 @@ export default async function MenuPage() {
           <p>{text.subtitle}</p>
         </div>
         <div className="menu-contact-actions" aria-label={text.orderTitle}>
-          <a className="menu-action menu-action-primary" href="tel:+18325189699">
+          <a className="menu-action" href="tel:+18325189699">
             {text.vietnameseCall}
             <span>(832) 518-9699</span>
           </a>
@@ -76,7 +65,7 @@ export default async function MenuPage() {
             {text.englishCall}
             <span>(714) 757-5778</span>
           </a>
-          <a className="menu-action menu-action-text" href="sms:+17147575778">
+          <a className="menu-action" href="sms:+17147575778">
             {text.englishText}
           </a>
         </div>
@@ -102,16 +91,7 @@ export default async function MenuPage() {
                     <strong>{copy.price}</strong>
                   </div>
                   <p className="menu-feature-description">{copy.description}</p>
-                  <dl className="menu-date-list">
-                    <div>
-                      <dt>{text.deliveryDate}</dt>
-                      <dd>{formatDate(dish.deliveryDate, locale)}</dd>
-                    </div>
-                    <div>
-                      <dt>{text.orderDeadline}</dt>
-                      <dd>{formatDate(dish.orderDeadline, locale)}</dd>
-                    </div>
-                  </dl>
+                  <p className="menu-availability">{text.availableDates}</p>
                   <div className="menu-feature-actions">
                     <a href="tel:+18325189699">{text.vietnameseCall}</a>
                     <a href="sms:+17147575778">{text.englishText}</a>
