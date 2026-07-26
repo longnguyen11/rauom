@@ -65,11 +65,11 @@ export default async function MenuPage() {
             {text.vietnameseCall}
             <span>(832) 518-9699</span>
           </a>
-          <a className="menu-action" href="tel:+17147575778">
+          <a className="menu-action" href="tel:+17147574768">
             {text.englishCall}
-            <span>(714) 757-5778</span>
+            <span>(714) 757-4768</span>
           </a>
-          <a className="menu-action" href="sms:+17147575778">
+          <a className="menu-action" href="sms:+17147574768">
             {text.englishText}
           </a>
         </div>
@@ -98,7 +98,7 @@ export default async function MenuPage() {
                   <p className="menu-availability">{text.availableDates}</p>
                   <div className="menu-feature-actions">
                     <a href="tel:+18325189699">{text.vietnameseCall}</a>
-                    <a href="sms:+17147575778">{text.englishText}</a>
+                    <a href="sms:+17147574768">{text.englishText}</a>
                   </div>
                 </div>
               </article>
@@ -153,13 +153,13 @@ export default async function MenuPage() {
             <span>{text.vietnameseCall}</span>
             <strong>(832) 518-9699</strong>
           </a>
-          <a href="tel:+17147575778">
+          <a href="tel:+17147574768">
             <span>{text.englishCall}</span>
-            <strong>(714) 757-5778</strong>
+            <strong>(714) 757-4768</strong>
           </a>
-          <a href="sms:+17147575778">
+          <a href="sms:+17147574768">
             <span>{text.englishText}</span>
-            <strong>(714) 757-5778</strong>
+            <strong>(714) 757-4768</strong>
           </a>
         </div>
       </section>
