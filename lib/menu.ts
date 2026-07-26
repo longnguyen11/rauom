@@ -198,7 +198,7 @@ export function getDefaultTemporaryDishes(): TemporaryMenuDish[] {
       isActive: true,
       deliveryDate: toDateKey(saturday),
       orderDeadline: toDateKey(shiftUtcDays(saturday, -2)),
-      imageUrl: "",
+      imageUrl: "/menu-assets/pho.png",
       copy: {
         vi: {
           name: "Phở Bò",

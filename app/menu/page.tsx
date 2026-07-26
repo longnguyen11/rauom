@@ -1,4 +1,3 @@
-import { MenuDishImage } from "@/components/menu-dish-image";
 import { MenuLanguageToggle } from "@/components/menu-language-toggle";
 import { getCurrentLocale } from "@/lib/i18n";
 import { getMenuData } from "@/lib/menu";
@@ -7,32 +6,38 @@ export const dynamic = "force-dynamic";
 
 const MENU_TEXT = {
   en: {
-    eyebrow: "Vietnamese cuisine",
-    title: "Rau Om Menu",
+    eyebrow: "Orlando · Small-batch Vietnamese cooking",
+    title: "Rau Om",
     subtitle:
-      "Small-batch dishes for pickup or delivery. For English, call or text (714) 757-5778.",
-    mainstayTitle: "Mainstay Dishes",
-    temporaryTitle: "Temporary Dishes",
+      "Comforting Vietnamese dishes, thoughtfully prepared in small batches for pickup or delivery.",
+    mainstayTitle: "Always Available",
+    mainstayIntro: "House favorites prepared to order.",
+    temporaryTitle: "This Week at Rau Om",
+    featuredLabel: "Weekly special",
     deliveryDate: "Delivery date",
-    orderDeadline: "Last day to order",
-    contact: "For English, call or text: (714) 757-5778",
-    madeToOrderLabel: "Made to order",
-    temporaryAvailableLabel: "Temporary dishes",
-    temporaryUnavailable: "not available right now",
+    orderDeadline: "Order by",
+    orderTitle: "Place an order",
+    orderCopy: "Choose your dishes, then call or text us to confirm availability and fulfillment.",
+    vietnameseCall: "Vietnamese · Call Ms. Ha",
+    englishCall: "English · Call",
+    englishText: "English · Text",
   },
   vi: {
-    eyebrow: "Ẩm thực Việt",
-    title: "Thực Đơn Rau Om",
+    eyebrow: "Orlando · Món Việt nấu theo mẻ nhỏ",
+    title: "Rau Om",
     subtitle:
-      "Món nấu theo mẻ nhỏ, có pickup hoặc delivery. Để được hỗ trợ bằng tiếng Việt, xin liên hệ chị Hà: (832) 518-9699.",
-    mainstayTitle: "Món Cố Định",
-    temporaryTitle: "Món Tạm Thời",
+      "Những món Việt thân thuộc được chuẩn bị chu đáo theo từng mẻ nhỏ, có pickup hoặc delivery.",
+    mainstayTitle: "Món Luôn Có",
+    mainstayIntro: "Các món nhà làm được chuẩn bị theo đơn.",
+    temporaryTitle: "Món Tuần Này",
+    featuredLabel: "Món đặc biệt trong tuần",
     deliveryDate: "Ngày giao",
-    orderDeadline: "Ngày cuối đặt món",
-    contact: "Tiếng Việt xin liên hệ chị Hà: (832) 518-9699",
-    madeToOrderLabel: "Các món làm theo đơn",
-    temporaryAvailableLabel: "Món tạm thời",
-    temporaryUnavailable: "hiện chưa có",
+    orderDeadline: "Đặt trước ngày",
+    orderTitle: "Đặt món",
+    orderCopy: "Chọn món, sau đó gọi hoặc nhắn tin để xác nhận món và cách nhận hàng.",
+    vietnameseCall: "Tiếng Việt · Gọi chị Hà",
+    englishCall: "English · Call",
+    englishText: "English · Text",
   },
 } as const;
 
@@ -50,103 +55,119 @@ export default async function MenuPage() {
   const text = MENU_TEXT[locale];
   const menu = await getMenuData();
   const temporaryDishes = menu.temporaryDishes.filter((dish) => dish.isActive);
-  const madeToOrderLine = menu.mainstayDishes
-    .map((dish) => {
-      const copy = dish.copy[locale];
-      return `${copy.name} (${copy.price})`;
-    })
-    .join("; ");
-  const temporaryDishLine = temporaryDishes
-    .map((dish) => {
-      const copy = dish.copy[locale];
-      return `${copy.name} (${copy.price})`;
-    })
-    .join("; ");
 
   return (
     <main className="menu-public-page">
       <header className="menu-hero">
-        <div className="menu-brand-block">
+        <div className="menu-hero-topline">
           <p className="menu-kicker">{text.eyebrow}</p>
+          <MenuLanguageToggle locale={locale} />
+        </div>
+        <div className="menu-brand-block">
           <h1>{text.title}</h1>
           <p>{text.subtitle}</p>
         </div>
-        <MenuLanguageToggle locale={locale} />
+        <div className="menu-contact-actions" aria-label={text.orderTitle}>
+          <a className="menu-action menu-action-primary" href="tel:+18325189699">
+            {text.vietnameseCall}
+            <span>(832) 518-9699</span>
+          </a>
+          <a className="menu-action" href="tel:+17147575778">
+            {text.englishCall}
+            <span>(714) 757-5778</span>
+          </a>
+          <a className="menu-action menu-action-text" href="sms:+17147575778">
+            {text.englishText}
+          </a>
+        </div>
       </header>
 
-      <section className="menu-section" aria-labelledby="mainstay-menu-heading">
-        <div className="menu-section-heading">
-          <h2 id="mainstay-menu-heading">{text.mainstayTitle}</h2>
-          <p>{text.contact}</p>
+      {temporaryDishes.length > 0 ? (
+        <section className="menu-feature-section" aria-labelledby="temporary-menu-heading">
+          <p className="menu-section-number">01</p>
+          <h2 id="temporary-menu-heading">{text.temporaryTitle}</h2>
+          {temporaryDishes.map((dish) => {
+            const copy = dish.copy[locale];
+
+            return (
+              <article className="menu-feature" key={dish.id}>
+                <div className="menu-feature-photo">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dish.imageUrl} alt={copy.imageAlt} />
+                </div>
+                <div className="menu-feature-copy">
+                  <p className="menu-feature-label">{text.featuredLabel}</p>
+                  <div className="menu-feature-title">
+                    <h3>{copy.name}</h3>
+                    <strong>{copy.price}</strong>
+                  </div>
+                  <p className="menu-feature-description">{copy.description}</p>
+                  <dl className="menu-date-list">
+                    <div>
+                      <dt>{text.deliveryDate}</dt>
+                      <dd>{formatDate(dish.deliveryDate, locale)}</dd>
+                    </div>
+                    <div>
+                      <dt>{text.orderDeadline}</dt>
+                      <dd>{formatDate(dish.orderDeadline, locale)}</dd>
+                    </div>
+                  </dl>
+                  <div className="menu-feature-actions">
+                    <a href="tel:+18325189699">{text.vietnameseCall}</a>
+                    <a href="sms:+17147575778">{text.englishText}</a>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      ) : null}
+
+      <section className="menu-list-section" aria-labelledby="mainstay-menu-heading">
+        <div className="menu-list-heading">
+          <p className="menu-section-number">02</p>
+          <div>
+            <h2 id="mainstay-menu-heading">{text.mainstayTitle}</h2>
+            <p>{text.mainstayIntro}</p>
+          </div>
         </div>
-        <div className="menu-card-grid">
+        <div className="menu-editorial-list">
           {menu.mainstayDishes.map((dish) => {
             const copy = dish.copy[locale];
 
             return (
-              <article className="menu-card" key={dish.id}>
-                <div className="menu-card-photo">
-                  <MenuDishImage src={dish.imageUrl} alt={copy.imageAlt} />
-                </div>
-                <div className="menu-card-body">
-                  <div className="menu-card-title-row">
-                    <h3>{copy.name}</h3>
-                    <strong>{copy.price}</strong>
-                  </div>
+              <article className="menu-editorial-item" key={dish.id}>
+                <div>
+                  <h3>{copy.name}</h3>
                   <p>{copy.description}</p>
                 </div>
+                <strong>{copy.price}</strong>
               </article>
             );
           })}
         </div>
       </section>
 
-      {temporaryDishes.length > 0 ? (
-        <section className="menu-section" aria-labelledby="temporary-menu-heading">
-          <div className="menu-section-heading">
-            <h2 id="temporary-menu-heading">{text.temporaryTitle}</h2>
-          </div>
-          <div className="menu-card-grid menu-card-grid-temporary">
-            {temporaryDishes.map((dish) => {
-              const copy = dish.copy[locale];
-
-              return (
-                <article className="menu-card menu-card-temporary" key={dish.id}>
-                  <div className="menu-card-photo">
-                    <MenuDishImage src={dish.imageUrl} alt={copy.imageAlt} />
-                  </div>
-                  <div className="menu-card-body">
-                    <div className="menu-card-title-row">
-                      <h3>{copy.name}</h3>
-                      <strong>{copy.price}</strong>
-                    </div>
-                    <p>{copy.description}</p>
-                    <dl className="menu-date-list">
-                      <div>
-                        <dt>{text.deliveryDate}</dt>
-                        <dd>{formatDate(dish.deliveryDate, locale)}</dd>
-                      </div>
-                      <div>
-                        <dt>{text.orderDeadline}</dt>
-                        <dd>{formatDate(dish.orderDeadline, locale)}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="menu-made-to-order" aria-label={text.madeToOrderLabel}>
-        <p>
-          <strong>{text.madeToOrderLabel}:</strong> {madeToOrderLine}.
-          <span className="menu-made-to-order-segment">
-            <strong>{text.temporaryAvailableLabel}:</strong>{" "}
-            {temporaryDishLine || text.temporaryUnavailable}
-          </span>
-        </p>
+      <section className="menu-order-section" aria-labelledby="menu-order-heading">
+        <p className="menu-section-number">03</p>
+        <div className="menu-order-copy">
+          <h2 id="menu-order-heading">{text.orderTitle}</h2>
+          <p>{text.orderCopy}</p>
+        </div>
+        <div className="menu-order-links">
+          <a href="tel:+18325189699">
+            <span>{text.vietnameseCall}</span>
+            <strong>(832) 518-9699</strong>
+          </a>
+          <a href="tel:+17147575778">
+            <span>{text.englishCall}</span>
+            <strong>(714) 757-5778</strong>
+          </a>
+          <a href="sms:+17147575778">
+            <span>{text.englishText}</span>
+            <strong>(714) 757-5778</strong>
+          </a>
+        </div>
       </section>
     </main>
   );

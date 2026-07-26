@@ -2400,3 +2400,460 @@ main {
     margin-top: 0.45rem;
   }
 }
+
+/* Editorial public menu */
+.menu-public-page {
+  --menu-ink: #1e271f;
+  --menu-leaf: #294b36;
+  --menu-cream: #f4f0e7;
+  --menu-paper: #fbf9f4;
+  --menu-line: rgba(30, 39, 31, 0.18);
+  min-height: 100vh;
+  padding: 0 clamp(1.25rem, 5vw, 5rem) clamp(3rem, 7vw, 7rem);
+  background: var(--menu-paper);
+  color: var(--menu-ink);
+}
+
+.menu-hero,
+.menu-feature-section,
+.menu-list-section,
+.menu-order-section {
+  width: min(1240px, 100%);
+  margin-inline: auto;
+}
+
+.menu-hero {
+  display: block;
+  margin-bottom: clamp(4rem, 9vw, 8rem);
+  padding: 1.25rem 0 clamp(3rem, 7vw, 6.5rem);
+  border-bottom: 1px solid var(--menu-line);
+}
+
+.menu-hero-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: clamp(3rem, 8vw, 7rem);
+}
+
+.menu-kicker {
+  color: var(--menu-leaf);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.menu-language-toggle {
+  border: 1px solid var(--menu-line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.menu-language-toggle button {
+  min-width: 48px;
+  padding: 0.48rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.menu-language-toggle button.active {
+  background: var(--menu-ink);
+}
+
+.menu-brand-block {
+  max-width: 880px;
+  gap: 1.25rem;
+}
+
+.menu-hero h1 {
+  color: var(--menu-ink);
+  font-size: clamp(5rem, 15vw, 12rem);
+  font-weight: 500;
+  line-height: 0.78;
+  letter-spacing: -0.065em;
+}
+
+.menu-hero .menu-brand-block > p {
+  max-width: 650px;
+  color: #4e574f;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.menu-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: clamp(2rem, 4vw, 3.5rem);
+}
+
+.menu-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--menu-ink);
+  padding: 0.78rem 1rem;
+  color: var(--menu-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.menu-action span {
+  opacity: 0.66;
+  font-weight: 600;
+}
+
+.menu-action:hover,
+.menu-action:focus-visible,
+.menu-action-primary {
+  background: var(--menu-ink);
+  color: var(--menu-paper);
+}
+
+.menu-action-text {
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.menu-section-number {
+  margin: 0;
+  color: #687168;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.menu-feature-section,
+.menu-list-section {
+  margin-bottom: clamp(5rem, 11vw, 10rem);
+}
+
+.menu-feature-section > h2,
+.menu-list-heading h2,
+.menu-order-copy h2 {
+  margin: 0;
+  color: var(--menu-ink);
+  font-family: var(--font-heading), serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.menu-feature-section > h2 {
+  margin: 0.75rem 0 1.6rem;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+}
+
+.menu-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+  min-height: 620px;
+  background: var(--menu-cream);
+}
+
+.menu-feature-photo {
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.menu-feature-photo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: 52% center;
+}
+
+.menu-feature-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 5vw, 4.5rem);
+}
+
+.menu-feature-label {
+  margin: 0 0 1.5rem;
+  color: var(--menu-leaf);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.menu-feature-title {
+  display: grid;
+  gap: 0.75rem;
+  padding-bottom: 1.6rem;
+  border-bottom: 1px solid var(--menu-line);
+}
+
+.menu-feature-title h3 {
+  margin: 0;
+  font-family: var(--font-heading), serif;
+  font-size: clamp(2.3rem, 4vw, 4.2rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.menu-feature-title strong {
+  color: var(--menu-leaf);
+  font-size: 1rem;
+}
+
+.menu-feature-description {
+  margin: 1.6rem 0 1.8rem;
+  color: #535c54;
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.menu-date-list {
+  margin: 0;
+  border-top: 1px solid var(--menu-line);
+}
+
+.menu-date-list div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--menu-line);
+  border-top: 0;
+}
+
+.menu-date-list dt {
+  color: #687168;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.menu-date-list dd {
+  color: var(--menu-ink);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.menu-feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin-top: 2rem;
+}
+
+.menu-feature-actions a {
+  color: var(--menu-ink);
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-underline-offset: 0.28em;
+}
+
+.menu-list-heading {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  padding-bottom: clamp(2rem, 4vw, 3.5rem);
+  border-bottom: 1px solid var(--menu-ink);
+}
+
+.menu-list-heading h2,
+.menu-order-copy h2 {
+  font-size: clamp(2.5rem, 6vw, 5.2rem);
+  line-height: 0.95;
+}
+
+.menu-list-heading > div > p {
+  margin: 0.8rem 0 0;
+  color: #687168;
+  font-size: 0.92rem;
+}
+
+.menu-editorial-list {
+  margin-left: 70px;
+}
+
+.menu-editorial-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  padding: clamp(1.5rem, 3vw, 2.4rem) 0;
+  border-bottom: 1px solid var(--menu-line);
+}
+
+.menu-editorial-item h3 {
+  margin: 0;
+  color: var(--menu-ink);
+  font-family: var(--font-heading), serif;
+  font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.menu-editorial-item p {
+  max-width: 680px;
+  margin: 0.45rem 0 0;
+  color: #687168;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.menu-editorial-item > strong {
+  padding-top: 0.25rem;
+  color: var(--menu-leaf);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.menu-order-section {
+  display: grid;
+  grid-template-columns: 70px minmax(260px, 0.8fr) minmax(320px, 1.2fr);
+  gap: clamp(1.5rem, 5vw, 5rem);
+  align-items: start;
+  padding: clamp(2.5rem, 6vw, 5rem);
+  background: var(--menu-ink);
+  color: var(--menu-paper);
+}
+
+.menu-order-section .menu-section-number {
+  color: #a7afa8;
+}
+
+.menu-order-copy h2 {
+  color: var(--menu-paper);
+}
+
+.menu-order-copy p {
+  margin: 1.15rem 0 0;
+  color: #bdc4bd;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.menu-order-links {
+  display: grid;
+}
+
+.menu-order-links a {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid rgba(251, 249, 244, 0.22);
+  color: var(--menu-paper);
+  text-decoration: none;
+}
+
+.menu-order-links a:first-child {
+  border-top: 1px solid rgba(251, 249, 244, 0.22);
+}
+
+.menu-order-links span {
+  color: #bdc4bd;
+  font-size: 0.76rem;
+}
+
+.menu-order-links strong {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .menu-feature {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .menu-feature-photo {
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+  }
+
+  .menu-order-section {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+
+  .menu-order-links {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .menu-public-page {
+    padding: 0 1rem 3rem;
+  }
+
+  .menu-hero {
+    padding-top: 1rem;
+  }
+
+  .menu-hero-topline {
+    align-items: flex-start;
+  }
+
+  .menu-kicker {
+    max-width: 190px;
+    line-height: 1.45;
+  }
+
+  .menu-hero h1 {
+    font-size: clamp(4.6rem, 27vw, 7rem);
+  }
+
+  .menu-contact-actions {
+    display: grid;
+  }
+
+  .menu-action {
+    justify-content: space-between;
+  }
+
+  .menu-feature-section > h2 {
+    max-width: 320px;
+  }
+
+  .menu-feature-photo {
+    aspect-ratio: 4 / 3;
+  }
+
+  .menu-feature-copy {
+    padding: 1.6rem;
+  }
+
+  .menu-list-heading {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .menu-editorial-list {
+    margin-left: 38px;
+  }
+
+  .menu-editorial-item {
+    gap: 1rem;
+  }
+
+  .menu-editorial-item p {
+    max-width: 29ch;
+  }
+
+  .menu-order-section {
+    grid-template-columns: 1fr;
+    padding: 1.75rem;
+  }
+
+  .menu-order-links {
+    grid-column: auto;
+  }
+
+  .menu-order-links a {
+    display: grid;
+    gap: 0.35rem;
+  }
+}
