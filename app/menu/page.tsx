@@ -12,6 +12,8 @@ const MENU_TEXT = {
       "Comforting Vietnamese dishes, thoughtfully prepared for pickup or delivery.",
     mainstayTitle: "Always Available",
     mainstayIntro: "House favorites prepared to order.",
+    mainstayImageAlt: "Rau Om grilled pork with herbs, pickled vegetables, and dipping sauce",
+    mainstayImageCaption: "Thit Nuong · Grilled Pork",
     temporaryTitle: "This Week at Rau Om",
     featuredLabel: "Weekly special",
     availableDates: "Available 07/30 – 08/02",
@@ -28,6 +30,8 @@ const MENU_TEXT = {
       "Những món Việt thân thuộc được chuẩn bị chu đáo, có pickup hoặc delivery.",
     mainstayTitle: "Món Luôn Có",
     mainstayIntro: "Các món nhà làm được chuẩn bị theo đơn.",
+    mainstayImageAlt: "Thịt nướng Rau Om với rau thơm, đồ chua và nước chấm",
+    mainstayImageCaption: "Thịt Nướng",
     temporaryTitle: "Món Tuần Này",
     featuredLabel: "Món đặc biệt trong tuần",
     availableDates: "Có từ 07/30 – 08/02",
@@ -111,20 +115,30 @@ export default async function MenuPage() {
             <p>{text.mainstayIntro}</p>
           </div>
         </div>
-        <div className="menu-editorial-list">
-          {menu.mainstayDishes.map((dish) => {
-            const copy = dish.copy[locale];
+        <div className="menu-list-content">
+          <figure className="menu-list-photo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/menu-assets/thit-nuong.jpg"
+              alt={text.mainstayImageAlt}
+            />
+            <figcaption>{text.mainstayImageCaption}</figcaption>
+          </figure>
+          <div className="menu-editorial-list">
+            {menu.mainstayDishes.map((dish) => {
+              const copy = dish.copy[locale];
 
-            return (
-              <article className="menu-editorial-item" key={dish.id}>
-                <div>
-                  <h3>{copy.name}</h3>
-                  <p>{copy.description}</p>
-                </div>
-                <strong>{copy.price}</strong>
-              </article>
-            );
-          })}
+              return (
+                <article className="menu-editorial-item" key={dish.id}>
+                  <div>
+                    <h3>{copy.name}</h3>
+                    <p>{copy.description}</p>
+                  </div>
+                  <strong>{copy.price}</strong>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
